@@ -48,16 +48,17 @@ export function LoginForm({ onLoginSuccess }: LoginFormProps) {
   }
 
   return (
-    <Card className="w-full shadow-2xl border-0 gradient-card relative overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5"></div>
-      <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-accent/10 to-transparent rounded-full blur-xl"></div>
-      <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-primary/10 to-transparent rounded-full blur-lg"></div>
+  <div className="w-full min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/30 via-accent/10 to-primary/30">
+      <Card className="w-full max-w-md min-h-[32rem] shadow-2xl border-0 gradient-card relative overflow-hidden flex flex-col justify-center">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5"></div>
+        <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-accent/10 to-transparent rounded-full blur-xl"></div>
+        <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-primary/10 to-transparent rounded-full blur-lg"></div>
 
-      <CardHeader className="text-center space-y-6 pb-8 relative z-10">
-        <div className="flex items-center justify-center space-x-3 mb-4">
-          <div className="relative group">
-            <div className="absolute inset-0 bg-gradient-to-r from-primary to-accent rounded-full blur-md opacity-30 group-hover:opacity-50 transition-opacity duration-300"></div>
-            <div className="relative bg-gradient-to-br from-primary to-accent p-3 rounded-full">
+        <CardHeader className="text-center space-y-6 pb-8 relative z-10">
+          <div className="flex items-center justify-center space-x-3 mb-4">
+            <div className="relative group">
+              <div className="absolute inset-0 bg-gradient-to-r from-primary to-accent rounded-full blur-md opacity-30 group-hover:opacity-50 transition-opacity duration-300"></div>
+              <div className="relative bg-gradient-to-br from-primary to-accent p-3 rounded-full">
               <Heart className="h-8 w-8 text-white fill-white" />
               <Users className="h-4 w-4 text-white absolute -bottom-1 -right-1 bg-accent rounded-full p-0.5" />
               <Sparkles className="h-3 w-3 text-white absolute -top-1 -left-1 animate-pulse" />
@@ -179,5 +180,8 @@ export function LoginForm({ onLoginSuccess }: LoginFormProps) {
         </div>
       </CardContent>
     </Card>
+    </div>     
   )
 }
+
+
