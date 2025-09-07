@@ -7,7 +7,6 @@
 "use client"
 
 import { useState } from "react"
-// Eliminado import duplicado de SessionPanel
 import { ServiceCategories } from "@/components/panel-components/service-categories"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
