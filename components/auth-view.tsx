@@ -11,6 +11,7 @@ import { LoginForm } from "./login-form";
 import { SessionPanel } from "./session-panel";
 
 // Definimos el tipo de usuario que recibimos de Firebase
+//Aqui sacamos el nombre de usuario, email y foto
 interface User {
   displayName?: string | null;
   email?: string | null;
