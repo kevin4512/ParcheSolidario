@@ -209,7 +209,7 @@ interface SessionPanelProps {
                 <Card className="p-8">
                   <h2 className="text-2xl font-semibold mb-4 text-foreground">Nuestra Historia</h2>
                   <p className="text-muted-foreground mb-6 leading-relaxed">
-                    Fundada en 2020, nuestra plataforma nació de la necesidad de crear puentes entre ciudadanos
+                    Fundada en 2025, nuestra plataforma nació de la necesidad de crear puentes entre ciudadanos
                     comprometidos y las oportunidades de servicio en sus comunidades. Creemos que cada persona tiene el
                     poder de generar cambios positivos cuando se le brindan las herramientas y oportunidades adecuadas.
                   </p>
