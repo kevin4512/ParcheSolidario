@@ -34,7 +34,7 @@ interface SessionPanelProps {
             <div className="w-16 h-16 mx-auto mb-6 bg-primary rounded-full flex items-center justify-center">
               <span className="text-2xl text-primary-foreground">🏛️</span>
             </div>
-            <h1 className="text-2xl font-bold text-foreground mb-2">Servicio Comunitario</h1>
+            <h1 className="text-2xl font-bold text-foreground mb-2">Parche Solidario</h1>
             <p className="text-muted-foreground mb-8 leading-relaxed">
               Conecta con tu comunidad y participa en servicios que marcan la diferencia
             </p>
