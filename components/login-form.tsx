@@ -68,7 +68,7 @@ export function LoginForm({ onLoginSuccess }: LoginFormProps) {
             <h1 className="text-3xl font-bold bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
               Parche Solidario
             </h1>
-            <p className="text-xs text-muted-foreground font-medium">Conectando corazones</p>
+            <p className="text-xs text-muted-foreground font-medium">.......</p>
           </div>
         </div>
 
