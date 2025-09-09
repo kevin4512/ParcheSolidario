@@ -131,7 +131,7 @@ export function LoginForm({ onLoginSuccess }: LoginFormProps) {
         </div>
 
         <div className="grid grid-cols-2 gap-4">
-          //aqui el btn de twiter o x
+         
           <Button
             variant="outline"
             className="h-12 border-2 border-accent/20 hover:border-accent/40 hover:bg-accent/5 transition-all duration-300 bg-card/50 backdrop-blur-sm group"
