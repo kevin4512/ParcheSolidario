@@ -53,7 +53,7 @@ interface SessionPanelProps {
                   <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center">
                     <span className="text-xl text-primary">🏛️</span>
                   </div>
-                  <h1 className="text-xl font-bold">Servicio Comunitario</h1>
+                  <h1 className="text-xl font-bold">Parche Solidario</h1>
                 </div>
                 <nav className="hidden md:flex items-center gap-6">
                   <button
