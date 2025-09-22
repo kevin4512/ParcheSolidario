@@ -7,7 +7,6 @@
 "use client"
 
 import { useState } from "react"
-// Eliminado import duplicado de SessionPanel
 import { ServiceCategories } from "@/components/panel-components/service-categories"
 import { ProfileVerification } from "@/components/profile-verification"
 import { HeatmapView } from "@/components/heatmap-view"
