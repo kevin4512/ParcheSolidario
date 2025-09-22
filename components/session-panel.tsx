@@ -11,8 +11,11 @@ import { useState } from "react"
 import { ServiceCategories } from "@/components/panel-components/service-categories"
 import { ProfileVerification } from "@/components/profile-verification"
 import { HeatmapView } from "@/components/heatmap-view"
+import { AddActivityForm } from "@/components/add-activity-form"
+import { RecentActivities } from "@/components/recent-activities"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
+import { logout } from "@/modules/domain/auth/firebaseAuth"
 
 
 // Definición del tipo User para recibir el usuario real por props
@@ -24,11 +27,21 @@ export type User = {
 
 interface SessionPanelProps {
   user: User;
-  onLogout: () => void;
+  onLogout?: () => void; // Ahora es opcional ya que manejamos el logout internamente
 }
   export function SessionPanel({ user, onLogout }: SessionPanelProps) {
     // Estado para controlar la sección activa del panel
     const [activeSection, setActiveSection] = useState<string>("home");
+
+    // Función para manejar el logout
+    const handleLogout = async () => {
+      try {
+        await logout();
+        // El estado se actualizará automáticamente via onAuthStateChanged
+      } catch (error) {
+        console.error("Error al cerrar sesión:", error);
+      }
+    };
     if (!user) {
       return (
         <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -120,7 +133,7 @@ interface SessionPanelProps {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={onLogout}
+                  onClick={handleLogout}
                   className="w-full sm:w-auto text-primary-foreground hover:bg-primary-foreground/10"
                 >
                   Salir
@@ -196,12 +209,6 @@ interface SessionPanelProps {
 
                {/* Mapa de Actividades */}
                <section>
-                 <div className="text-center mb-8 md:mb-12">
-                   <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-4">Mapa de Actividades</h2>
-                   <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto">
-                     Explora las actividades de la plataforma en tu zona y encuentra oportunidades de participación.
-                   </p>
-                 </div>
                  <HeatmapView />
                </section>
 
@@ -214,6 +221,11 @@ interface SessionPanelProps {
                    </p>
                  </div>
                  <ServiceCategories expanded />
+               </section>
+
+               {/* Actividades Recientes */}
+               <section>
+                 <RecentActivities />
                </section>
             </div>
           )}
@@ -273,8 +285,9 @@ interface SessionPanelProps {
           )}
 
           {activeSection === "map" && (
-            <div className="w-full">
+            <div className="w-full space-y-8">
               <HeatmapView />
+              <AddActivityForm />
             </div>
           )}
         </main>

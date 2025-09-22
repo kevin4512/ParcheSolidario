@@ -6,37 +6,35 @@
 //
 // Clean Architecture: la lógica de autenticación está desacoplada de la UI.
 
-import { useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
 import { LoginForm } from "./login-form";
 import { SessionPanel } from "./session-panel";
 
-// Definimos el tipo de usuario que recibimos de Firebase
-//Aqui sacamos el nombre de usuario, email y foto
-interface User {
-  displayName?: string | null;
-  email?: string | null;
-  photoURL?: string | null;
-}
-
 export function AuthView() {
-  // Estado para guardar el usuario autenticado
-  const [user, setUser] = useState<User | null>(null);
+  // Usamos el hook personalizado para manejar el estado de autenticación
+  const { user, loading } = useAuth();
 
-  // Esta función se pasa al LoginForm y se llama cuando el login es exitoso
-  const handleLoginSuccess = (userData: User) => {
-    setUser(userData);
-  };
-
-  // Esta función se pasa al SessionPanel y se llama cuando el usuario cierra sesión
-  const handleLogout = () => {
-    setUser(null);
-  };
+  // Mostrar un loading mientras se verifica el estado de autenticación
+  if (loading) {
+    return (
+      <div className="w-full min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/30 via-accent/10 to-primary/30">
+        <div className="text-center space-y-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="text-muted-foreground">Verificando sesión...</p>
+        </div>
+      </div>
+    );
+  }
 
   // Si hay usuario, muestra el panel de sesión; si no, el formulario de login
   return user ? (
-    <SessionPanel user={user} onLogout={handleLogout} />
+    <SessionPanel user={{
+      displayName: user.displayName,
+      email: user.email,
+      photoURL: user.photoURL,
+    }} onLogout={() => {}} />
   ) : (
-    <LoginForm onLoginSuccess={handleLoginSuccess} />
+    <LoginForm />
   );
 }
 

@@ -1,0 +1,25 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Reglas para perfiles de usuario
+    match /userProfiles/{userId} {
+      // Los usuarios solo pueden leer y escribir su propio perfil
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+      
+      // Los administradores pueden leer todos los perfiles
+      allow read: if request.auth != null && 
+        request.auth.token.role == 'admin';
+      
+      // Los administradores pueden actualizar el estado de verificación
+      allow update: if request.auth != null && 
+        request.auth.token.role == 'admin' &&
+        request.resource.data.keys().hasAll(['verificationStatus', 'isVerified', 'updatedAt']);
+    }
+    
+    // Reglas para otros documentos (puedes agregar más según necesites)
+    match /{document=**} {
+      // Por defecto, denegar acceso
+      allow read, write: if false;
+    }
+  }
+}
