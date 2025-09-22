@@ -8,6 +8,8 @@
 
 import { useState } from "react"
 import { ServiceCategories } from "@/components/panel-components/service-categories"
+import { ProfileVerification } from "@/components/profile-verification"
+import { HeatmapView } from "@/components/heatmap-view"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 
@@ -33,7 +35,7 @@ interface SessionPanelProps {
             <div className="w-16 h-16 mx-auto mb-6 bg-primary rounded-full flex items-center justify-center">
               <span className="text-2xl text-primary-foreground">🏛️</span>
             </div>
-            <h1 className="text-2xl font-bold text-foreground mb-2">Servicio Comunitario</h1>
+            <h1 className="text-2xl font-bold text-foreground mb-2">Parche Solidario</h1>
             <p className="text-muted-foreground mb-8 leading-relaxed">
               Conecta con tu comunidad y participa en servicios que marcan la diferencia
             </p>
@@ -52,7 +54,7 @@ interface SessionPanelProps {
                   <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center">
                     <span className="text-xl text-primary">🏛️</span>
                   </div>
-                  <h1 className="text-xl font-bold">Servicio Comunitario</h1>
+                  <h1 className="text-xl font-bold">Parche Solidario</h1>
                 </div>
                 <nav className="hidden md:flex items-center gap-6">
                   <button
@@ -85,6 +87,26 @@ interface SessionPanelProps {
                   >
                     Nosotros
                   </button>
+                   <button
+                     onClick={() => setActiveSection("profile")}
+                     className={`px-3 py-2 rounded-md transition-colors ${
+                       activeSection === "profile"
+                         ? "bg-white text-primary font-medium"
+                         : "text-primary-foreground hover:bg-white/10"
+                     }`}
+                   >
+                     Mi Perfil
+                   </button>
+                   <button
+                     onClick={() => setActiveSection("map")}
+                     className={`px-3 py-2 rounded-md transition-colors ${
+                       activeSection === "map"
+                         ? "bg-white text-primary font-medium"
+                         : "text-primary-foreground hover:bg-white/10"
+                     }`}
+                   >
+                     Mapa
+                   </button>
                 </nav>
               </div>
               <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
@@ -171,16 +193,27 @@ interface SessionPanelProps {
                 </Card>
               </section>
 
-              {/* Service Categories Preview */}
-              <section>
-                <div className="text-center mb-8 md:mb-12">
-                  <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-4">¿Cómo deseas ayudar?</h2>
-                  <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto">
-                    Elige el área donde quieres hacer la diferencia y únete a proyectos que transforman vidas.
-                  </p>
-                </div>
-                <ServiceCategories expanded />
-              </section>
+               {/* Mapa de Actividades */}
+               <section>
+                 <div className="text-center mb-8 md:mb-12">
+                   <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-4">Mapa de Actividades</h2>
+                   <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto">
+                     Explora las actividades de la plataforma en tu zona y encuentra oportunidades de participación.
+                   </p>
+                 </div>
+                 <HeatmapView />
+               </section>
+
+               {/* Service Categories Preview */}
+               <section>
+                 <div className="text-center mb-8 md:mb-12">
+                   <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-4">¿Cómo deseas ayudar?</h2>
+                   <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto">
+                     Elige el área donde quieres hacer la diferencia y únete a proyectos que transforman vidas.
+                   </p>
+                 </div>
+                 <ServiceCategories expanded />
+               </section>
             </div>
           )}
 
@@ -208,7 +241,7 @@ interface SessionPanelProps {
                 <Card className="p-8">
                   <h2 className="text-2xl font-semibold mb-4 text-foreground">Nuestra Historia</h2>
                   <p className="text-muted-foreground mb-6 leading-relaxed">
-                    Fundada en 2020, nuestra plataforma nació de la necesidad de crear puentes entre ciudadanos
+                    Fundada en 2025, nuestra plataforma nació de la necesidad de crear puentes entre ciudadanos
                     comprometidos y las oportunidades de servicio en sus comunidades. Creemos que cada persona tiene el
                     poder de generar cambios positivos cuando se le brindan las herramientas y oportunidades adecuadas.
                   </p>
@@ -233,9 +266,14 @@ interface SessionPanelProps {
           )}
 
           {activeSection === "profile" && (
-            <div className="max-w-2xl mx-auto">
-              <h1 className="text-3xl font-bold text-foreground mb-8">Mi Perfil</h1>
-              <SessionPanel user={user} onLogout={onLogout} />
+            <div className="w-full">
+              <ProfileVerification />
+            </div>
+          )}
+
+          {activeSection === "map" && (
+            <div className="w-full">
+              <HeatmapView />
             </div>
           )}
         </main>
