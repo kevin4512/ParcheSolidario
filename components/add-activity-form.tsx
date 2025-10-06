@@ -9,13 +9,14 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { MapPin, Plus, Calendar, Users } from "lucide-react"
 import { toast } from "sonner"
-import { ActivitiesService, CreateActivityData } from "@/modules/infraestructura/firebase/ActivitiesService"
+import { useActivities } from "@/src/presentation/hooks/useActivities"
 import { useAuth } from "@/hooks/useAuth"
+import { CreateActivityDto, ActivityCategory, ActivityStatus } from "@/src/application/dto/ActivityDto"
 
 export function AddActivityForm() {
   const { user } = useAuth()
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [formData, setFormData] = useState<CreateActivityData>({
+  const { createActivity, loading } = useActivities()
+  const [formData, setFormData] = useState<CreateActivityDto>({
     title: "",
     description: "",
     category: "eventos",
@@ -23,11 +24,10 @@ export function AddActivityForm() {
     longitude: -75.5812,
     participants: 0,
     date: "",
-    status: "upcoming",
-    createdBy: user?.uid || ""
+    status: "upcoming"
   })
 
-  const handleInputChange = (field: keyof CreateActivityData, value: string | number) => {
+  const handleInputChange = (field: keyof CreateActivityDto, value: string | number) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
@@ -47,13 +47,8 @@ export function AddActivityForm() {
       return
     }
 
-    setIsSubmitting(true)
     try {
-      await ActivitiesService.createActivity({
-        ...formData,
-        createdBy: user.uid
-      })
-      
+      await createActivity(formData, user.uid)
       toast.success("Actividad creada exitosamente")
       
       // Limpiar formulario
@@ -65,15 +60,12 @@ export function AddActivityForm() {
         longitude: -75.5812,
         participants: 0,
         date: "",
-        status: "upcoming",
-        createdBy: user.uid
+        status: "upcoming"
       })
       
     } catch (error) {
       console.error("Error al crear actividad:", error)
       toast.error("Error al crear la actividad")
-    } finally {
-      setIsSubmitting(false)
     }
   }
 
@@ -214,18 +206,17 @@ export function AddActivityForm() {
                 longitude: -75.5812,
                 participants: 0,
                 date: "",
-                status: "upcoming",
-                createdBy: user?.uid || ""
+                status: "upcoming"
               })}
             >
               Limpiar
             </Button>
             <Button
               type="submit"
-              disabled={isSubmitting}
+              disabled={loading}
               className="flex items-center gap-2"
             >
-              {isSubmitting ? (
+              {loading ? (
                 <>
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
                   Creando...
