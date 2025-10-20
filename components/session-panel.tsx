@@ -11,7 +11,9 @@ import { ServiceCategories } from "@/components/panel-components/service-categor
 import { ProfileVerification } from "@/components/profile-verification"
 import { HeatmapView } from "@/components/heatmap-view"
 import { AddActivityForm } from "@/components/add-activity-form"
+import { EventPublications } from "@/components/event-publications"
 import { RecentActivities } from "@/components/recent-activities"
+import { ActivitiesProvider } from "@/contexts/ActivitiesContext"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { logout } from "@/modules/domain/auth/firebaseAuth"
@@ -58,6 +60,7 @@ interface SessionPanelProps {
     }
 
     return (
+      <ActivitiesProvider>
       <div className="w-full min-h-screen bg-background flex flex-col items-center justify-center">
   <header className="bg-primary text-primary-foreground shadow-lg w-full">
           <div className="w-full max-w-7xl mx-auto px-2 sm:px-4 py-4 flex flex-col md:flex-row items-center justify-between gap-4">
@@ -284,13 +287,17 @@ interface SessionPanelProps {
           )}
 
           {activeSection === "map" && (
-            <div className="w-full space-y-8">
-              <HeatmapView />
-              <AddActivityForm />
-            </div>
+            <ActivitiesProvider>
+              <div className="w-full space-y-8">
+                <HeatmapView />
+                <AddActivityForm />
+                <EventPublications />
+              </div>
+            </ActivitiesProvider>
           )}
         </main>
       </div>
+      </ActivitiesProvider>
     );
   }
 
