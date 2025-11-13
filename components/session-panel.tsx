@@ -6,17 +6,19 @@
 
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { ServiceCategories } from "@/components/panel-components/service-categories"
 import { ProfileVerification } from "@/components/profile-verification"
 import { HeatmapView } from "@/components/heatmap-view"
 import { AddActivityForm } from "@/components/add-activity-form"
 import { EventPublications } from "@/components/event-publications"
 import { RecentActivities } from "@/components/recent-activities"
+import { CategoryActivities } from "@/components/category-activities"
 import { ActivitiesProvider } from "@/contexts/ActivitiesContext"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { logout } from "@/modules/domain/auth/firebaseAuth"
+import { toast } from "sonner"
 
 
 // Definición del tipo User para recibir el usuario real por props
@@ -33,6 +35,10 @@ interface SessionPanelProps {
   export function SessionPanel({ user, onLogout }: SessionPanelProps) {
     // Estado para controlar la sección activa del panel
     const [activeSection, setActiveSection] = useState<string>("home");
+    // Estado para controlar la categoría seleccionada
+    const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+    // Estado para controlar si ya se mostró la alerta de scroll
+    const [hasShownScrollAlert, setHasShownScrollAlert] = useState(false);
 
     // Función para manejar el logout
     const handleLogout = async () => {
@@ -43,6 +49,58 @@ interface SessionPanelProps {
         console.error("Error al cerrar sesión:", error);
       }
     };
+
+    // Resetear el estado de la alerta cuando se vuelve a la página principal
+    useEffect(() => {
+      if (activeSection === "home") {
+        // Resetear cuando vuelve a home para que pueda ver la alerta de nuevo si hace scroll
+        // Solo si no está en la parte superior de la página
+        if (window.scrollY <= 200) {
+          setHasShownScrollAlert(false);
+        }
+      }
+    }, [activeSection]);
+
+    // Efecto para detectar scroll y mostrar alerta
+    useEffect(() => {
+      // Solo mostrar la alerta en la página principal (home)
+      if (activeSection !== "home") {
+        return;
+      }
+
+      const handleScroll = () => {
+        // Detectar cuando el usuario hace scroll más de 200px
+        const scrollY = window.scrollY || window.pageYOffset;
+        
+        if (scrollY > 200 && !hasShownScrollAlert) {
+          setHasShownScrollAlert(true);
+          toast("🎯 ¡Crea tu Evento!", {
+            description: "Recuerda que puedes agregar un evento en la sección de Crear Evento en el menú de navegación",
+            duration: 10000,
+            className: "!min-w-[400px] !text-lg !p-6 !shadow-2xl !border-2 !bg-primary !text-primary-foreground !border-primary",
+            style: {
+              fontSize: '16px',
+              fontWeight: '600',
+              backgroundColor: 'var(--primary)',
+              color: 'var(--primary-foreground)',
+              borderColor: 'var(--primary)',
+            },
+            action: {
+              label: "Ir a Crear Evento",
+              onClick: () => setActiveSection("map")
+            }
+          });
+        }
+      };
+
+      // Agregar el listener de scroll
+      window.addEventListener("scroll", handleScroll, { passive: true });
+
+      // Limpiar el listener cuando el componente se desmonte o cambie la sección
+      return () => {
+        window.removeEventListener("scroll", handleScroll);
+      };
+    }, [activeSection, hasShownScrollAlert]);
     if (!user) {
       return (
         <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -121,7 +179,7 @@ interface SessionPanelProps {
                          : "text-primary-foreground hover:bg-white/10"
                      }`}
                    >
-                     Mapa
+                     Crear Evento
                    </button>
                 </nav>
               </div>
@@ -222,7 +280,13 @@ interface SessionPanelProps {
                      Elige el área donde quieres hacer la diferencia y únete a proyectos que transforman vidas.
                    </p>
                  </div>
-                 <ServiceCategories expanded />
+                 <ServiceCategories 
+                   expanded 
+                   onCategoryClick={(categoryId) => {
+                     setSelectedCategory(categoryId)
+                     setActiveSection("services")
+                   }}
+                 />
                </section>
 
                {/* Actividades Recientes */}
@@ -234,13 +298,25 @@ interface SessionPanelProps {
 
           {activeSection === "services" && (
             <div>
-              <div className="text-center mb-12">
-                <h1 className="text-4xl font-bold text-foreground mb-4">Todos los Servicios</h1>
-                <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                  Explora todas las oportunidades de servicio comunitario disponibles en tu área.
-                </p>
-              </div>
-              <ServiceCategories expanded />
+              {selectedCategory ? (
+                <CategoryActivities 
+                  categoryId={selectedCategory}
+                  onBack={() => setSelectedCategory(null)}
+                />
+              ) : (
+                <>
+                  <div className="text-center mb-12">
+                    <h1 className="text-4xl font-bold text-foreground mb-4">Todos los Servicios</h1>
+                    <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                      Explora todas las oportunidades de servicio comunitario disponibles en tu área.
+                    </p>
+                  </div>
+                  <ServiceCategories 
+                    expanded 
+                    onCategoryClick={(categoryId) => setSelectedCategory(categoryId)}
+                  />
+                </>
+              )}
             </div>
           )}
 

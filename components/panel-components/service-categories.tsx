@@ -41,14 +41,25 @@ const categories: ServiceCategory[] = [
 
 interface ServiceCategoriesProps {
   expanded?: boolean
+  onCategoryClick?: (categoryId: string) => void
 }
 
-export function ServiceCategories({ expanded = false }: ServiceCategoriesProps) {
+export function ServiceCategories({ expanded = false, onCategoryClick }: ServiceCategoriesProps) {
+  const handleCategoryClick = (categoryId: string) => {
+    if (onCategoryClick) {
+      onCategoryClick(categoryId)
+    }
+  }
+
   if (expanded) {
     return (
       <div className="space-y-4">
         {categories.map((category) => (
-          <Card key={category.id} className="p-6 hover:shadow-lg transition-all cursor-pointer border-0 shadow-md">
+          <Card 
+            key={category.id} 
+            className="p-6 hover:shadow-lg transition-all cursor-pointer border-0 shadow-md"
+            onClick={() => handleCategoryClick(category.id)}
+          >
             <div className="flex items-center gap-6">
               <div
                 className={`w-16 h-16 rounded-2xl ${category.color} flex items-center justify-center text-2xl shadow-md`}
@@ -75,6 +86,7 @@ export function ServiceCategories({ expanded = false }: ServiceCategoriesProps) 
           <Card
             key={category.id}
             className="p-6 text-center hover:shadow-lg transition-all cursor-pointer border-0 shadow-md"
+            onClick={() => handleCategoryClick(category.id)}
           >
             <div
               className={`w-16 h-16 mx-auto rounded-2xl ${category.color} flex items-center justify-center text-2xl mb-4 shadow-md`}

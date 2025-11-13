@@ -4,7 +4,8 @@ import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Calendar, Users, MapPin, Heart, Shield, Megaphone } from "lucide-react"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Calendar, Users, MapPin, Heart, Shield, Megaphone, Clock, Target } from "lucide-react"
 import { Activity } from "@/modules/infraestructura/firebase/ActivitiesService"
 import { useActivitiesContext } from "@/contexts/ActivitiesContext"
 
@@ -44,6 +45,7 @@ const categoryConfig = {
 
 export function RecentActivities() {
   const { activities, isLoading, loadActivities } = useActivitiesContext()
+  const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null)
 
   // No necesitamos cargar aquí, el contexto ya lo hace automáticamente
 
@@ -51,6 +53,15 @@ export function RecentActivities() {
   const recentActivities = activities
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     .slice(0, 6)
+
+  const formatTime = (time: string) => {
+    if (!time) return ""
+    const [hours, minutes] = time.split(':')
+    const hour = parseInt(hours)
+    const ampm = hour >= 12 ? 'PM' : 'AM'
+    const displayHour = hour % 12 || 12
+    return `${displayHour}:${minutes} ${ampm}`
+  }
 
   if (isLoading) {
     return (
@@ -129,6 +140,7 @@ export function RecentActivities() {
                   variant="outline" 
                   size="sm" 
                   className="w-full text-xs"
+                  onClick={() => setSelectedActivity(activity)}
                 >
                   Ver Detalles
                 </Button>
@@ -143,6 +155,120 @@ export function RecentActivities() {
           Ver Todas las Actividades
         </Button>
       </div>
+
+      {/* Dialog de detalles */}
+      {selectedActivity && (
+        <Dialog open={!!selectedActivity} onOpenChange={() => setSelectedActivity(null)}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <div className="flex items-center gap-3 mb-2">
+                {(() => {
+                  const config = categoryConfig[selectedActivity.category]
+                  const Icon = config.icon
+                  return (
+                    <div className={`w-10 h-10 rounded-full ${config.bgColor} flex items-center justify-center`}>
+                      <Icon className={`h-5 w-5 ${config.textColor}`} />
+                    </div>
+                  )
+                })()}
+                <DialogTitle className="text-2xl">{selectedActivity.title}</DialogTitle>
+              </div>
+              <div className="flex items-center gap-2">
+                {(() => {
+                  const config = categoryConfig[selectedActivity.category]
+                  return (
+                    <Badge 
+                      variant="outline" 
+                      className={`text-xs ${config.textColor} border-current`}
+                    >
+                      {config.label}
+                    </Badge>
+                  )
+                })()}
+                <Badge 
+                  variant={selectedActivity.status === 'active' ? 'default' : 'secondary'}
+                  className="text-xs"
+                >
+                  {selectedActivity.status === 'active' ? 'Activo' : 
+                   selectedActivity.status === 'upcoming' ? 'Próximo' : 'Completado'}
+                </Badge>
+              </div>
+            </DialogHeader>
+            
+            <div className="space-y-6 pt-4">
+              <div>
+                <h4 className="font-semibold mb-2 text-foreground">Descripción</h4>
+                <p className="text-muted-foreground leading-relaxed">
+                  {selectedActivity.description}
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 text-sm">
+                    <MapPin className="h-4 w-4 text-muted-foreground" />
+                    <div>
+                      <span className="font-semibold text-foreground">Ubicación:</span>
+                      <p className="text-muted-foreground">{selectedActivity.location || 'Medellín'}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <Calendar className="h-4 w-4 text-muted-foreground" />
+                    <div>
+                      <span className="font-semibold text-foreground">Fecha:</span>
+                      <p className="text-muted-foreground">
+                        {new Date(selectedActivity.date).toLocaleDateString('es-CO', {
+                          weekday: 'long',
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric'
+                        })}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <Clock className="h-4 w-4 text-muted-foreground" />
+                    <div>
+                      <span className="font-semibold text-foreground">Hora:</span>
+                      <p className="text-muted-foreground">
+                        {formatTime(selectedActivity.time)}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 text-sm">
+                    <Users className="h-4 w-4 text-muted-foreground" />
+                    <div>
+                      <span className="font-semibold text-foreground">Participantes:</span>
+                      <p className="text-muted-foreground">
+                        {selectedActivity.participants} / {selectedActivity.capacity}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <Target className="h-4 w-4 text-muted-foreground" />
+                    <div>
+                      <span className="font-semibold text-foreground">Objetivo:</span>
+                      <p className="text-muted-foreground">{selectedActivity.fundraisingGoal}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-2 pt-4 border-t">
+                <Button variant="default" className="flex-1">
+                  Participar
+                </Button>
+                <Button variant="outline" className="flex-1">
+                  Compartir
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   )
 }
