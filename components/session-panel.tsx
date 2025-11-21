@@ -88,7 +88,12 @@ interface SessionPanelProps {
             action: {
               label: "Ir a Crear Evento",
               onClick: () => setActiveSection("map")
-            }
+            },
+            cancel: {
+              label: "Cerrar",
+              onClick: () => {}
+            },
+            dismissible: true
           });
         }
       };
@@ -142,6 +147,16 @@ interface SessionPanelProps {
                     Inicio
                   </button>
                   <button
+                    onClick={() => setActiveSection("about")}
+                    className={`px-3 py-2 rounded-md transition-colors ${
+                      activeSection === "about"
+                        ? "bg-white text-primary font-medium"
+                        : "text-primary-foreground hover:bg-white/10"
+                    }`}
+                  >
+                    Nosotros
+                  </button>
+                  <button
                     onClick={() => setActiveSection("services")}
                     className={`px-3 py-2 rounded-md transition-colors ${
                       activeSection === "services"
@@ -152,35 +167,25 @@ interface SessionPanelProps {
                     Servicios
                   </button>
                   <button
-                    onClick={() => setActiveSection("about")}
+                    onClick={() => setActiveSection("map")}
                     className={`px-3 py-2 rounded-md transition-colors ${
-                      activeSection === "about"
+                      activeSection === "map"
                         ? "bg-white text-primary font-medium"
                         : "text-primary-foreground hover:bg-white/10"
                     }`}
                   >
-                    Nosotros
+                    Crear Evento
                   </button>
-                   <button
-                     onClick={() => setActiveSection("profile")}
-                     className={`px-3 py-2 rounded-md transition-colors ${
-                       activeSection === "profile"
-                         ? "bg-white text-primary font-medium"
-                         : "text-primary-foreground hover:bg-white/10"
-                     }`}
-                   >
-                     Mi Perfil
-                   </button>
-                   <button
-                     onClick={() => setActiveSection("map")}
-                     className={`px-3 py-2 rounded-md transition-colors ${
-                       activeSection === "map"
-                         ? "bg-white text-primary font-medium"
-                         : "text-primary-foreground hover:bg-white/10"
-                     }`}
-                   >
-                     Crear Evento
-                   </button>
+                  <button
+                    onClick={() => setActiveSection("profile")}
+                    className={`px-3 py-2 rounded-md transition-colors ${
+                      activeSection === "profile"
+                        ? "bg-white text-primary font-medium"
+                        : "text-primary-foreground hover:bg-white/10"
+                    }`}
+                  >
+                    Mi Perfil
+                  </button>
                 </nav>
               </div>
               <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
@@ -323,36 +328,72 @@ interface SessionPanelProps {
           {activeSection === "about" && (
             <div className="max-w-4xl mx-auto">
               <div className="text-center mb-12">
-                <h1 className="text-4xl font-bold text-foreground mb-4">Sobre Nosotros</h1>
-                <p className="text-lg text-muted-foreground">
-                  Conoce más sobre nuestra organización y cómo estamos transformando comunidades.
+                <h1 className="text-4xl font-bold text-foreground mb-4">Parche Solidario</h1>
+                <p className="text-lg text-muted-foreground font-semibold">
+                Conoce más sobre nuestra organización y cómo estamos transformando comunidades.
                 </p>
               </div>
-              <div className="prose prose-lg mx-auto">
-                <Card className="p-8">
-                  <h2 className="text-2xl font-semibold mb-4 text-foreground">Nuestra Historia</h2>
-                  <p className="text-muted-foreground mb-6 leading-relaxed">
-                    Fundada en 2025, nuestra plataforma nació de la necesidad de crear puentes entre ciudadanos
-                    comprometidos y las oportunidades de servicio en sus comunidades. Creemos que cada persona tiene el
-                    poder de generar cambios positivos cuando se le brindan las herramientas y oportunidades adecuadas.
-                  </p>
-                  <h3 className="text-xl font-semibold mb-3 text-foreground">Nuestros Valores</h3>
-                  <ul className="space-y-2 text-muted-foreground">
-                    <li>
-                      • <strong>Transparencia:</strong> Operamos con total claridad en todos nuestros procesos
-                    </li>
-                    <li>
-                      • <strong>Inclusión:</strong> Creamos espacios donde todos pueden participar y contribuir
-                    </li>
-                    <li>
-                      • <strong>Impacto:</strong> Nos enfocamos en generar cambios medibles y duraderos
-                    </li>
-                    <li>
-                      • <strong>Colaboración:</strong> Fomentamos el trabajo conjunto entre todos los actores
-                    </li>
-                  </ul>
-                </Card>
-              </div>
+              
+              <Card className="p-8 md:p-12 border-2">
+                <div className="space-y-10">
+                  {/* Quiénes Somos */}
+                  <section>
+                    <h2 className="text-2xl font-bold mb-6 text-foreground">Quiénes Somos</h2>
+                    <div className="space-y-4 text-muted-foreground leading-relaxed">
+                      <p>
+                        En Parche Solidario creemos en la fuerza de las pequeñas acciones y en el poder de una ciudad que se cuida entre todos. Por eso creamos una aplicación web que reúne, en un solo lugar, las causas sociales que necesitan apoyo en Medellín: eventos, refugios, colectas, protestas y muchas otras iniciativas que buscan transformar realidades.
+                      </p>
+                      <p>
+                        Queremos que ayudar sea más fácil. Con nuestro mapa de calor, filtros por tipo de causa y perfiles verificados, cada persona puede encontrar dónde aportar, a quién apoyar y cómo unirse a quienes ya están haciendo la diferencia, porque cuando una historia se difunde, crece la esperanza.
+                      </p>
+                      <p>
+                        Somos un proyecto sin fines comerciales, impulsado por la convicción de que la solidaridad se multiplica cuando la tecnología se usa para conectar corazones. En Parche Solidario, trabajamos para que cada gesto cuente y para que Medellín siga siendo una ciudad que late al ritmo de su gente.
+                      </p>
+                    </div>
+                  </section>
+
+                  {/* Nuestra Historia */}
+                  <section>
+                    <h2 className="text-2xl font-bold mb-6 text-foreground">Nuestra Historia</h2>
+                    <p className="text-muted-foreground leading-relaxed">
+                      Fundada en 2025, nuestra plataforma nació de la necesidad de crear puentes entre ciudadanos
+                      comprometidos y las oportunidades de servicio en sus comunidades. Creemos que cada persona tiene el
+                      poder de generar cambios positivos cuando se le brindan las herramientas y oportunidades adecuadas.
+                    </p>
+                  </section>
+
+                  {/* Nuestros Valores */}
+                  <section>
+                    <h2 className="text-2xl font-bold mb-6 text-foreground">Nuestros Valores</h2>
+                    <ul className="space-y-3 text-muted-foreground">
+                      <li className="flex items-start gap-3">
+                        <span className="text-primary font-bold text-xl">•</span>
+                        <div>
+                          <strong className="text-foreground">Transparencia:</strong> Operamos con total claridad en todos nuestros procesos
+                        </div>
+                      </li>
+                      <li className="flex items-start gap-3">
+                        <span className="text-primary font-bold text-xl">•</span>
+                        <div>
+                          <strong className="text-foreground">Inclusión:</strong> Creamos espacios donde todos pueden participar y contribuir
+                        </div>
+                      </li>
+                      <li className="flex items-start gap-3">
+                        <span className="text-primary font-bold text-xl">•</span>
+                        <div>
+                          <strong className="text-foreground">Impacto:</strong> Nos enfocamos en generar cambios medibles y duraderos
+                        </div>
+                      </li>
+                      <li className="flex items-start gap-3">
+                        <span className="text-primary font-bold text-xl">•</span>
+                        <div>
+                          <strong className="text-foreground">Colaboración:</strong> Fomentamos el trabajo conjunto entre todos los actores
+                        </div>
+                      </li>
+                    </ul>
+                  </section>
+                </div>
+              </Card>
             </div>
           )}
 
@@ -365,7 +406,6 @@ interface SessionPanelProps {
           {activeSection === "map" && (
             <ActivitiesProvider>
               <div className="w-full space-y-8">
-                <HeatmapView />
                 <AddActivityForm />
                 <EventPublications />
               </div>
