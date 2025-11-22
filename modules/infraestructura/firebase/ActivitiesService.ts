@@ -46,11 +46,18 @@ export class ActivitiesService {
       const activities: Activity[] = [];
       querySnapshot.forEach((doc) => {
         const data = doc.data();
-        activities.push({
-          id: doc.id,
+        // Normalizar posibles formatos de ubicación (latitude/longitude directos o GeoPoint en 'location')
+        const normalized: any = {
           ...data,
+          latitude: data.latitude ?? data.location?.latitude,
+          longitude: data.longitude ?? data.location?.longitude,
           createdAt: data.createdAt?.toDate() || new Date(),
           updatedAt: data.updatedAt?.toDate() || new Date(),
+        }
+
+        activities.push({
+          id: doc.id,
+          ...normalized
         } as Activity);
       });
 
@@ -77,11 +84,17 @@ export class ActivitiesService {
       const activities: Activity[] = [];
       querySnapshot.forEach((doc) => {
         const data = doc.data();
-        activities.push({
-          id: doc.id,
+        const normalized: any = {
           ...data,
+          latitude: data.latitude ?? data.location?.latitude,
+          longitude: data.longitude ?? data.location?.longitude,
           createdAt: data.createdAt?.toDate() || new Date(),
           updatedAt: data.updatedAt?.toDate() || new Date(),
+        }
+
+        activities.push({
+          id: doc.id,
+          ...normalized
         } as Activity);
       });
 
@@ -108,11 +121,17 @@ export class ActivitiesService {
       const activities: Activity[] = [];
       querySnapshot.forEach((doc) => {
         const data = doc.data();
-        activities.push({
-          id: doc.id,
+        const normalized: any = {
           ...data,
+          latitude: data.latitude ?? data.location?.latitude,
+          longitude: data.longitude ?? data.location?.longitude,
           createdAt: data.createdAt?.toDate() || new Date(),
           updatedAt: data.updatedAt?.toDate() || new Date(),
+        }
+
+        activities.push({
+          id: doc.id,
+          ...normalized
         } as Activity);
       });
 

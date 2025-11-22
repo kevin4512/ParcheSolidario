@@ -60,6 +60,10 @@ const mockActivities: Activity[] = [
     participants: 45,
     date: '2025-09-25',
     status: 'upcoming'
+    ,
+    createdBy: 'system',
+    createdAt: new Date(),
+    updatedAt: new Date()
   },
   {
     id: '2',
@@ -71,6 +75,10 @@ const mockActivities: Activity[] = [
     participants: 23,
     date: '2025-09-22',
     status: 'active'
+    ,
+    createdBy: 'system',
+    createdAt: new Date(),
+    updatedAt: new Date()
   },
   {
     id: '3',
@@ -82,6 +90,10 @@ const mockActivities: Activity[] = [
     participants: 12,
     date: '2025-09-20',
     status: 'active'
+    ,
+    createdBy: 'system',
+    createdAt: new Date(),
+    updatedAt: new Date()
   },
   {
     id: '4',
@@ -93,6 +105,10 @@ const mockActivities: Activity[] = [
     participants: 150,
     date: '2025-09-28',
     status: 'upcoming'
+    ,
+    createdBy: 'system',
+    createdAt: new Date(),
+    updatedAt: new Date()
   },
   {
     id: '5',
@@ -104,6 +120,10 @@ const mockActivities: Activity[] = [
     participants: 30,
     date: '2025-09-24',
     status: 'upcoming'
+    ,
+    createdBy: 'system',
+    createdAt: new Date(),
+    updatedAt: new Date()
   },
   {
     id: '6',
@@ -115,6 +135,10 @@ const mockActivities: Activity[] = [
     participants: 18,
     date: '2025-09-21',
     status: 'active'
+    ,
+    createdBy: 'system',
+    createdAt: new Date(),
+    updatedAt: new Date()
   }
 ]
 
@@ -241,74 +265,109 @@ export function HeatmapView() {
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               />
               
-              {filteredActivities.map((activity) => {
-                const config = categoryConfig[activity.category]
-                const Icon = config.icon
-                
-                return (
-                  <CircleMarker
-                    key={activity.id}
-                    center={[activity.latitude, activity.longitude]}
-                    radius={Math.max(8, Math.min(20, activity.participants / 5))}
-                    pathOptions={{
-                      color: config.color,
-                      fillColor: config.color,
-                      fillOpacity: 0.6,
-                      weight: 2
-                    }}
-                  >
-                    <Popup>
-                      <div className="p-2 min-w-[250px]">
-                        <div className="flex items-start gap-3 mb-3">
-                          <div className={`w-8 h-8 rounded-full ${config.bgColor} flex items-center justify-center flex-shrink-0`}>
-                            <Icon className={`h-4 w-4 ${config.textColor}`} />
+              {
+                // Filtrar actividades que tengan coordenadas válidas. Algunas entradas en Firestore
+                // pueden no tener los campos `latitude`/`longitude` (o pueden almacenarse como GeoPoint
+                // en `location`). Aquí normalizamos y descartamos las actividades sin coords válidas
+                // para evitar el error de Leaflet: "Invalid LatLng object: (undefined, undefined)".
+                (() => {
+                  const toNumber = (v: any): number | undefined => {
+                    if (typeof v === 'number' && Number.isFinite(v)) return v
+                    if (v == null) return undefined
+                    const n = Number(v)
+                    return Number.isFinite(n) ? n : undefined
+                  }
+
+                  const activitiesWithCoords = filteredActivities.filter((activity) => {
+                    const a: any = activity
+                    const rawLat = a.latitude ?? a.location?.latitude
+                    const rawLng = a.longitude ?? a.location?.longitude
+                    const lat = toNumber(rawLat)
+                    const lng = toNumber(rawLng)
+                    const ok = typeof lat === 'number' && typeof lng === 'number'
+                    if (!ok) {
+                      // Loguear para depuración en desarrollo (no rompe la UI)
+                      // eslint-disable-next-line no-console
+                      console.warn(`Skipping activity ${activity.id} - missing/invalid coords`, { rawLat, rawLng, activity })
+                    }
+                    return ok
+                  })
+
+                  return activitiesWithCoords.map((activity) => {
+                    const config = categoryConfig[activity.category]
+                    const Icon = config.icon
+                    const a: any = activity
+                    const rawLat = a.latitude ?? a.location?.latitude
+                    const rawLng = a.longitude ?? a.location?.longitude
+                    const lat = toNumber(rawLat) as number
+                    const lng = toNumber(rawLng) as number
+
+                    return (
+                      <CircleMarker
+                        key={activity.id}
+                        center={[lat, lng]}
+                        radius={Math.max(8, Math.min(20, activity.participants / 5))}
+                        pathOptions={{
+                          color: config.color,
+                          fillColor: config.color,
+                          fillOpacity: 0.6,
+                          weight: 2
+                        }}
+                      >
+                        <Popup>
+                          <div className="p-2 min-w-[250px]">
+                            <div className="flex items-start gap-3 mb-3">
+                              <div className={`w-8 h-8 rounded-full ${config.bgColor} flex items-center justify-center flex-shrink-0`}>
+                                <Icon className={`h-4 w-4 ${config.textColor}`} />
+                              </div>
+                              <div className="flex-1">
+                                <h3 className="font-semibold text-sm mb-1">{activity.title}</h3>
+                                <Badge 
+                                  variant="outline" 
+                                  className={`text-xs ${config.textColor} border-current`}
+                                >
+                                  {config.label}
+                                </Badge>
+                              </div>
+                            </div>
+                            
+                            <p className="text-xs text-muted-foreground mb-3 leading-relaxed">
+                              {activity.description}
+                            </p>
+                            
+                            <div className="space-y-2 text-xs">
+                              <div className="flex items-center gap-2">
+                                <Users className="h-3 w-3 text-muted-foreground" />
+                                <span>{activity.participants} participantes</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Calendar className="h-3 w-3 text-muted-foreground" />
+                                <span>{new Date(activity.date).toLocaleDateString('es-CO')}</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <div className={`w-2 h-2 rounded-full ${
+                                  activity.status === 'active' ? 'bg-green-500' :
+                                  activity.status === 'upcoming' ? 'bg-blue-500' : 'bg-gray-500'
+                                }`}></div>
+                                <span className="capitalize">
+                                  {activity.status === 'active' ? 'Activo' :
+                                   activity.status === 'upcoming' ? 'Próximo' : 'Completado'}
+                                </span>
+                              </div>
+                            </div>
+                            
+                            <div className="mt-3 pt-3 border-t">
+                              <button className="w-full text-xs bg-primary text-primary-foreground px-3 py-1.5 rounded hover:bg-primary/90 transition-colors">
+                                Ver Detalles
+                              </button>
+                            </div>
                           </div>
-                          <div className="flex-1">
-                            <h3 className="font-semibold text-sm mb-1">{activity.title}</h3>
-                            <Badge 
-                              variant="outline" 
-                              className={`text-xs ${config.textColor} border-current`}
-                            >
-                              {config.label}
-                            </Badge>
-                          </div>
-                        </div>
-                        
-                        <p className="text-xs text-muted-foreground mb-3 leading-relaxed">
-                          {activity.description}
-                        </p>
-                        
-                        <div className="space-y-2 text-xs">
-                          <div className="flex items-center gap-2">
-                            <Users className="h-3 w-3 text-muted-foreground" />
-                            <span>{activity.participants} participantes</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Calendar className="h-3 w-3 text-muted-foreground" />
-                            <span>{new Date(activity.date).toLocaleDateString('es-CO')}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <div className={`w-2 h-2 rounded-full ${
-                              activity.status === 'active' ? 'bg-green-500' :
-                              activity.status === 'upcoming' ? 'bg-blue-500' : 'bg-gray-500'
-                            }`}></div>
-                            <span className="capitalize">
-                              {activity.status === 'active' ? 'Activo' :
-                               activity.status === 'upcoming' ? 'Próximo' : 'Completado'}
-                            </span>
-                          </div>
-                        </div>
-                        
-                        <div className="mt-3 pt-3 border-t">
-                          <button className="w-full text-xs bg-primary text-primary-foreground px-3 py-1.5 rounded hover:bg-primary/90 transition-colors">
-                            Ver Detalles
-                          </button>
-                        </div>
-                      </div>
-                    </Popup>
-                  </CircleMarker>
-                )
-              })}
+                        </Popup>
+                      </CircleMarker>
+                    )
+                  })
+                })()
+              }
             </MapContainer>
           </div>
         </CardContent>
