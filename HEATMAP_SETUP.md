@@ -1,190 +1,142 @@
-# Mapa de Calor de Actividades - Segundo Sprint
+# Mapa de Calor - Configuración y Uso
 
-## 📋 Funcionalidades Implementadas
+## ✅ Funcionalidad Implementada
 
-### ✅ Visualización de Mapa de Calor
-- **Mapa interactivo**: Basado en OpenStreetMap con Leaflet
-- **Puntos de calor**: Círculos de diferentes tamaños según participación
-- **Categorías por colores**: Eventos, Colectas, Refugios, Protestas
-- **Zoom y desplazamiento**: Navegación completa del mapa
-- **Datos dinámicos**: Conexión con Firebase Firestore
+El mapa de calor está completamente implementado con las siguientes características:
 
-## 🗂️ Archivos Creados/Modificados
+### 🎯 **Características Principales**
 
-### Nuevos Archivos Creados:
-1. **`components/heatmap-view.tsx`** - Componente principal del mapa de calor
-2. **`modules/infraestructura/firebase/ActivitiesService.ts`** - Servicio para manejo de actividades en Firebase
-3. **`styles/leaflet.css`** - Estilos personalizados para el mapa
-4. **`HEATMAP_SETUP.md`** - Este archivo de documentación
+#### 1. **Geolocalización Automática**
+- ✅ Solicita permisos de ubicación al usuario
+- ✅ Centra el mapa en la ubicación del usuario
+- ✅ Marcador especial para la ubicación del usuario
+- ✅ Opción para solicitar ubicación nuevamente
+- ✅ Fallback a ubicación por defecto (Medellín)
 
-### Archivos Modificados:
-1. **`components/session-panel.tsx`** - Integrado el mapa en la página inicial y agregado botón "Mapa"
-2. **`app/layout.tsx`** - Importados estilos de Leaflet
-3. **`package.json`** - Agregadas dependencias de Leaflet
+#### 2. **Visualización de Actividades**
+- ✅ **4 Categorías con colores diferenciados:**
+  - 🔵 **Eventos** (Azul)
+  - 🟢 **Colectas** (Verde) 
+  - 🟡 **Refugios** (Amarillo/Naranja)
+  - 🔴 **Protestas** (Rojo)
+- ✅ Círculos de calor que varían según número de participantes
+- ✅ Popups informativos con detalles de cada actividad
+- ✅ Filtrado por categoría con clic en las tarjetas
 
-## 🎨 Características del Diseño
+#### 3. **Interactividad del Mapa**
+- ✅ Zoom y desplazamiento libre
+- ✅ Marcadores interactivos
+- ✅ Información detallada en popups
+- ✅ Leyenda explicativa
+- ✅ Contador de actividades mostradas
 
-### Categorías de Colores:
-- **🔵 Eventos**: Azul (#3b82f6) - Actividades y talleres
-- **🟢 Colectas**: Verde (#10b981) - Recolección de recursos
-- **🟡 Refugios**: Amarillo (#f59e0b) - Centros de acogida
-- **🔴 Protestas**: Rojo (#ef4444) - Manifestaciones y marchas
+#### 4. **Integración con Firebase**
+- ✅ Carga dinámica de datos desde Firestore
+- ✅ Fallback a datos de ejemplo si hay error
+- ✅ Formulario para agregar nuevas actividades
+- ✅ Validación de datos
 
-### Funcionalidades del Mapa:
-- **Zoom**: Control de zoom con botones y rueda del mouse
-- **Desplazamiento**: Arrastrar para mover el mapa
-- **Marcadores interactivos**: Círculos de tamaño variable según participantes
-- **Popups informativos**: Detalles completos de cada actividad
-- **Filtros por categoría**: Click en tarjetas para filtrar
+### 🔧 **Archivos Creados/Modificados**
 
-## 🔧 Configuración Técnica
+#### Nuevos Archivos:
+- `hooks/useGeolocation.ts` - Hook para manejar geolocalización
+- `components/location-permission.tsx` - Modal de permisos de ubicación
+- `components/add-activity-form.tsx` - Formulario para agregar actividades
 
-### Dependencias Instaladas:
-```json
-{
-  "leaflet": "^1.9.4",
-  "react-leaflet": "^4.2.1",
-  "@types/leaflet": "^1.9.8"
-}
-```
+#### Archivos Modificados:
+- `components/heatmap-view.tsx` - Integración con geolocalización
+- `components/session-panel.tsx` - Agregado formulario de actividades
 
-### Estructura de Datos en Firebase:
-```typescript
-interface Activity {
-  id: string;
-  title: string;
-  description: string;
-  category: 'eventos' | 'colectas' | 'refugios' | 'protestas';
-  latitude: number;
-  longitude: number;
-  participants: number;
-  date: string;
-  status: 'active' | 'completed' | 'upcoming';
-  createdBy: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
-```
+### 🚀 **Cómo Usar**
 
-## 📍 Ubicación del Mapa
+#### Para Usuarios:
+1. **Primera vez**: El sistema solicitará permisos de ubicación
+2. **Permitir ubicación**: El mapa se centrará en tu zona
+3. **Denegar ubicación**: El mapa usará ubicación por defecto (Medellín)
+4. **Filtrar actividades**: Haz clic en las tarjetas de categoría
+5. **Ver detalles**: Haz clic en los círculos del mapa
 
-### Centro por Defecto:
-- **Ciudad**: Bogotá, Colombia
-- **Coordenadas**: 4.6097, -74.0817
-- **Zoom inicial**: 13
+#### Para Administradores:
+1. Ve a la sección "Mapa" en el panel de usuario
+2. Usa el formulario "Agregar Nueva Actividad" al final
+3. Completa los datos de la actividad
+4. La actividad aparecerá inmediatamente en el mapa
 
-### Datos de Ejemplo Incluidos:
-- 6 actividades de ejemplo distribuidas en Bogotá
-- Diferentes categorías y estados
-- Números de participantes variables
+### 📍 **Configuración de Ubicaciones**
 
-## 🚀 Funcionalidades Implementadas
+#### Coordenadas por Defecto:
+- **Medellín**: 6.2442, -75.5812
+- **Zoom por defecto**: 13
+- **Zoom con ubicación del usuario**: 15
 
-### 1. Visualización del Mapa:
-- Mapa base de OpenStreetMap
-- Marcadores circulares con colores por categoría
-- Tamaño de círculos proporcional a participantes
-- Popups con información detallada
-
-### 2. Filtros y Controles:
-- Filtro por categoría (click en tarjetas)
-- Estadísticas en tiempo real
-- Contador de actividades mostradas
-- Leyenda explicativa
-
-### 3. Interactividad:
-- Zoom con mouse y controles
-- Desplazamiento arrastrando
-- Click en marcadores para detalles
-- Hover effects en controles
-
-### 4. Integración con Firebase:
-- Carga automática de datos
-- Fallback a datos de ejemplo
-- Manejo de errores de conexión
-- Servicios para CRUD de actividades
-
-## 📱 Responsive Design
-
-### Características:
-- **Mobile**: Mapa adaptado a pantallas pequeñas
-- **Tablet**: Layout optimizado para tablets
-- **Desktop**: Experiencia completa con controles
-
-### Breakpoints:
-- **sm**: 640px
-- **md**: 768px
-- **lg**: 1024px
-
-## 🔄 Flujo de Usuario
-
-1. **Usuario inicia sesión** → Ve la página principal
-2. **Ve el mapa de actividades** → En la sección principal
-3. **Explora las actividades** → Zoom y desplazamiento
-4. **Filtra por categoría** → Click en tarjetas de estadísticas
-5. **Ve detalles** → Click en marcadores del mapa
-6. **Navega a sección completa** → Botón "Mapa" en el menú
-
-## ⚙️ Configuración de Firebase
-
-### Colección: `activities`
+#### Ejemplos de Coordenadas para Pruebas:
 ```javascript
-// Reglas de Firestore
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    match /activities/{document} {
-      allow read: if true; // Lectura pública
-      allow write: if request.auth != null; // Escritura solo autenticados
-    }
-  }
+// Medellín - Centro
+{ latitude: 6.2442, longitude: -75.5812 }
+
+// Medellín - El Poblado
+{ latitude: 6.2000, longitude: -75.5700 }
+
+// Medellín - Laureles
+{ latitude: 6.2300, longitude: -75.5900 }
+
+// Medellín - Comuna 13
+{ latitude: 6.2500, longitude: -75.5700 }
+
+// Medellín - Belén
+{ latitude: 6.2600, longitude: -75.5600 }
+```
+
+### 🎨 **Personalización de Colores**
+
+Los colores de las categorías se pueden modificar en `heatmap-view.tsx`:
+
+```javascript
+const categoryConfig = {
+  eventos: { color: '#3b82f6' }, // Azul
+  colectas: { color: '#10b981' }, // Verde
+  refugios: { color: '#f59e0b' }, // Amarillo
+  protestas: { color: '#ef4444' }  // Rojo
 }
 ```
 
-### Índices Requeridos:
-- `category` (ascending)
-- `status` (ascending)
-- `createdAt` (descending)
-- `latitude` (ascending)
-- `longitude` (ascending)
+### 🔒 **Privacidad y Seguridad**
 
-## 🎯 Criterios de Aceptación Cumplidos
+- ✅ La ubicación del usuario se usa solo localmente
+- ✅ No se almacena la ubicación en la base de datos
+- ✅ El usuario puede denegar permisos sin problemas
+- ✅ Opción para solicitar ubicación nuevamente
 
-### ✅ Mapa muestra puntos de calor según nivel de actividad
-- Círculos de tamaño variable según participantes
-- Colores diferenciados por categoría
+### 📱 **Responsive Design**
 
-### ✅ Diferencia categorías por colores
-- Eventos: Azul
-- Colectas: Verde
-- Refugios: Amarillo
-- Protestas: Rojo
+- ✅ Funciona en dispositivos móviles
+- ✅ Touch-friendly para zoom y desplazamiento
+- ✅ Popups adaptados a pantallas pequeñas
+- ✅ Botones de control accesibles
 
-### ✅ Usuario puede hacer zoom y desplazarse
-- Controles de zoom integrados
-- Desplazamiento con mouse/touch
-- Navegación fluida
+### 🐛 **Solución de Problemas**
 
-### ✅ Datos provienen dinámicamente de Firebase
-- Conexión con Firestore
-- Carga automática de datos
-- Manejo de errores
+#### Si el mapa no carga:
+1. Verifica que Leaflet esté instalado: `npm install leaflet react-leaflet`
+2. Revisa la consola del navegador para errores
+3. Asegúrate de que Firebase esté configurado correctamente
 
-## 🔮 Próximas Mejoras
+#### Si la geolocalización no funciona:
+1. Verifica que el navegador soporte geolocalización
+2. Asegúrate de que el usuario haya dado permisos
+3. Revisa que la conexión GPS esté activa
 
-### Funcionalidades Adicionales:
-- Búsqueda por ubicación
-- Filtros por fecha y estado
-- Clustering de marcadores
-- Rutas entre actividades
-- Notificaciones de actividades cercanas
+#### Si las actividades no aparecen:
+1. Verifica la conexión a Firebase
+2. Revisa las reglas de Firestore
+3. Comprueba que la colección 'activities' exista
 
-### Optimizaciones:
-- Carga lazy de marcadores
-- Cache de datos
-- Compresión de imágenes
-- PWA para móviles
+### 🎉 **¡Listo para Usar!**
 
----
+El mapa de calor está completamente funcional y listo para mostrar actividades reales. Solo necesitas:
 
-**Desarrollado para Parche Solidario - Segundo Sprint** 🗺️
+1. **Agregar actividades** usando el formulario
+2. **Configurar Firebase** con las reglas apropiadas
+3. **Personalizar** los colores y estilos según necesites
+
+¡El segundo sprint del mapa de calor está completo! 🗺️✨

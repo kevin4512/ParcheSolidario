@@ -6,17 +6,8 @@ import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Heart, Users, Sparkles } from "lucide-react"
 
-// Definimos las props que recibe el LoginForm
-interface LoginFormProps {
-  onLoginSuccess?: (user: {
-    displayName?: string | null;
-    email?: string | null;
-    photoURL?: string | null;
-  }) => void;
-}
-
-// El formulario de login ahora acepta la prop onLoginSuccess
-export function LoginForm({ onLoginSuccess }: LoginFormProps) {
+// El formulario de login ya no necesita props ya que el estado se maneja automáticamente
+export function LoginForm() {
   // Estado para deshabilitar el botón mientras se autentica
   const [loading, setLoading] = useState(false);
 
@@ -25,15 +16,8 @@ export function LoginForm({ onLoginSuccess }: LoginFormProps) {
     setLoading(true);
     try {
       // Llama a la función de login con Google (abre el popup)
-      const user = await signInWithGoogle();
-      // Si la prop existe, notifica al componente padre (AuthView) que el login fue exitoso
-      if (onLoginSuccess && user) {
-        onLoginSuccess({
-          displayName: user.displayName,
-          email: user.email,
-          photoURL: user.photoURL,
-        });
-      }
+      // El estado de autenticación se actualiza automáticamente via onAuthStateChanged
+      await signInWithGoogle();
     } catch (error: any) {
       // Si el usuario cierra el popup o hay doble click, no es un error grave
       if (error.code === "auth/cancelled-popup-request" || error.code === "auth/popup-closed-by-user") {

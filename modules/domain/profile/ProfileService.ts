@@ -1,5 +1,6 @@
 import { StorageService } from "../../infraestructura/firebase/StorageService";
 import { EmailService, VerificationEmailData } from "../../infraestructura/email/EmailService";
+import { ProfileRepository, UserProfile } from "../../infraestructura/firebase/ProfileRepository";
 
 export interface ProfileData {
   fullName: string;
@@ -33,14 +34,26 @@ export class ProfileService {
     documents: DocumentUpload
   ): Promise<void> {
     try {
-      // 1. Subir documentos a Firebase Storage
+      // 1. Verificar si el usuario ya tiene un perfil
+      const hasExistingProfile = await ProfileRepository.hasProfile(userId);
+      if (hasExistingProfile) {
+        throw new Error("Ya tienes un perfil registrado. Si necesitas actualizarlo, contacta al administrador.");
+      }
+
+      // 2. Subir documentos a Firebase Storage
       const uploadResults = await StorageService.uploadVerificationDocuments(
         userId,
         documents.cameraDocument,
         documents.commerceDocument
       );
 
-      // 2. Preparar datos para el email de notificación
+      // 3. Guardar perfil en Firestore
+      await ProfileRepository.saveProfile(userId, profileData, {
+        cameraDocumentUrl: uploadResults.cameraDocument.url,
+        commerceDocumentUrl: uploadResults.commerceDocument.url
+      });
+
+      // 4. Preparar datos para el email de notificación
       const emailData: VerificationEmailData = {
         userEmail: profileData.email,
         userName: profileData.fullName,
@@ -50,14 +63,11 @@ export class ProfileService {
         profileData: profileData
       };
 
-      // 3. Enviar notificación al administrador
+      // 5. Enviar notificación al administrador
       await EmailService.sendVerificationNotification(emailData);
 
-      // 4. Enviar confirmación al usuario
+      // 6. Enviar confirmación al usuario
       await EmailService.sendUserConfirmation(profileData.email, profileData.fullName);
-
-      // 5. Aquí podrías guardar los datos del perfil en Firestore si es necesario
-      // await this.saveProfileToFirestore(userId, profileData, uploadResults);
 
     } catch (error) {
       console.error("Error en el proceso de verificación de perfil:", error);
@@ -92,6 +102,21 @@ export class ProfileService {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (profileData.email && !emailRegex.test(profileData.email)) {
       errors.push("El formato del email no es válido");
+    }
+
+    // Validar URLs de redes sociales
+    const urlRegex = /^https?:\/\/.+/;
+    if (profileData.socialMedia.facebook && !urlRegex.test(profileData.socialMedia.facebook)) {
+      errors.push("La URL de Facebook debe comenzar con http:// o https://");
+    }
+    if (profileData.socialMedia.instagram && !urlRegex.test(profileData.socialMedia.instagram)) {
+      errors.push("La URL de Instagram debe comenzar con http:// o https://");
+    }
+    if (profileData.socialMedia.twitter && !urlRegex.test(profileData.socialMedia.twitter)) {
+      errors.push("La URL de Twitter debe comenzar con http:// o https://");
+    }
+    if (profileData.socialMedia.linkedin && !urlRegex.test(profileData.socialMedia.linkedin)) {
+      errors.push("La URL de LinkedIn debe comenzar con http:// o https://");
     }
 
     // Validar documentos
@@ -143,5 +168,58 @@ export class ProfileService {
         linkedin: profileData.socialMedia?.linkedin?.trim() || ""
       }
     };
+  }
+
+  /**
+   * Obtiene el perfil de un usuario
+   */
+  static async getUserProfile(userId: string): Promise<UserProfile | null> {
+    try {
+      return await ProfileRepository.getProfile(userId);
+    } catch (error) {
+      console.error("Error al obtener perfil del usuario:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Verifica si un usuario está verificado
+   */
+  static async isUserVerified(userId: string): Promise<boolean> {
+    try {
+      const profile = await ProfileRepository.getProfile(userId);
+      return profile?.isVerified || false;
+    } catch (error) {
+      console.error("Error al verificar estado del usuario:", error);
+      return false;
+    }
+  }
+
+  /**
+   * Obtiene todos los perfiles pendientes de verificación (para administradores)
+   */
+  static async getPendingVerifications(): Promise<UserProfile[]> {
+    try {
+      return await ProfileRepository.getPendingProfiles();
+    } catch (error) {
+      console.error("Error al obtener verificaciones pendientes:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Aprueba o rechaza la verificación de un usuario (para administradores)
+   */
+  static async updateVerificationStatus(
+    userId: string, 
+    status: 'approved' | 'rejected'
+  ): Promise<void> {
+    try {
+      const isVerified = status === 'approved';
+      await ProfileRepository.updateVerificationStatus(userId, status, isVerified);
+    } catch (error) {
+      console.error("Error al actualizar estado de verificación:", error);
+      throw error;
+    }
   }
 }

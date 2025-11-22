@@ -1,14 +1,15 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Upload, Camera, FileText, MapPin, Link, User, Mail, Phone } from "lucide-react"
+import { Upload, Camera, FileText, MapPin, Link, User, Mail, Phone, CheckCircle, Clock, XCircle } from "lucide-react"
 import { toast } from "sonner"
 import { ProfileService, ProfileData as ServiceProfileData, DocumentUpload as ServiceDocumentUpload } from "@/modules/domain/profile/ProfileService"
+import { useAuth } from "@/hooks/useAuth"
 
 interface ProfileData {
   fullName: string
@@ -30,6 +31,7 @@ interface DocumentUpload {
 }
 
 export function ProfileVerification() {
+  const { user: authUser, loading: authLoading } = useAuth();
   const [profileData, setProfileData] = useState<ProfileData>({
     fullName: "",
     description: "",
@@ -45,6 +47,48 @@ export function ProfileVerification() {
   })
 
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [verificationStatus, setVerificationStatus] = useState<'none' | 'pending' | 'approved' | 'rejected'>('none')
+  const [isLoading, setIsLoading] = useState(true)
+
+  // Cargar estado del perfil cuando el usuario esté autenticado
+  useEffect(() => {
+    const loadProfileStatus = async () => {
+      if (!authUser || authLoading) return;
+      
+      try {
+        setIsLoading(true);
+        const userProfile = await ProfileService.getUserProfile(authUser.uid);
+        
+        if (userProfile) {
+          setVerificationStatus(userProfile.verificationStatus);
+          // Pre-llenar datos del perfil si ya existe
+          setProfileData({
+            fullName: userProfile.fullName,
+            description: userProfile.description,
+            location: userProfile.location,
+            socialMedia: userProfile.socialMedia,
+            phone: userProfile.phone,
+            email: userProfile.email
+          });
+        } else {
+          setVerificationStatus('none');
+          // Pre-llenar con datos del usuario autenticado
+          setProfileData(prev => ({
+            ...prev,
+            fullName: authUser.displayName || "",
+            email: authUser.email || ""
+          }));
+        }
+      } catch (error) {
+        console.error("Error al cargar estado del perfil:", error);
+        toast.error("Error al cargar el estado de tu perfil");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadProfileStatus();
+  }, [authUser, authLoading]);
 
   const handleInputChange = (field: keyof ProfileData, value: string) => {
     setProfileData(prev => ({
@@ -72,6 +116,11 @@ export function ProfileVerification() {
   }
 
   const handleSubmit = async () => {
+    if (!authUser) {
+      toast.error("Debes estar autenticado para enviar el perfil")
+      return
+    }
+
     if (!documents.cameraDocument || !documents.commerceDocument) {
       toast.error("Por favor sube ambos documentos requeridos")
       return
@@ -96,12 +145,9 @@ export function ProfileVerification() {
 
     setIsSubmitting(true)
     try {
-      // Generar un ID de usuario temporal (en producción esto vendría del contexto de autenticación)
-      const userId = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-      
-      // Procesar verificación de perfil
+      // Procesar verificación de perfil usando el usuario autenticado
       await ProfileService.submitProfileVerification(
-        userId,
+        authUser.uid,
         formattedProfileData,
         {
           cameraDocument: documents.cameraDocument,
@@ -110,27 +156,81 @@ export function ProfileVerification() {
       )
 
       toast.success("Perfil enviado para verificación. Te notificaremos cuando esté listo.")
+      setVerificationStatus('pending')
       
-      // Limpiar formulario después del envío exitoso
-      setProfileData({
-        fullName: "",
-        description: "",
-        location: "",
-        socialMedia: {},
-        phone: "",
-        email: ""
-      })
+      // Limpiar documentos después del envío exitoso
       setDocuments({
         cameraDocument: null,
         commerceDocument: null
       })
       
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error al enviar perfil:", error)
-      toast.error("Error al enviar el perfil. Intenta nuevamente.")
+      toast.error(error.message || "Error al enviar el perfil. Intenta nuevamente.")
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  // Mostrar loading mientras se carga el estado
+  if (authLoading || isLoading) {
+    return (
+      <div className="max-w-4xl mx-auto space-y-8">
+        <div className="text-center space-y-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="text-muted-foreground">Cargando estado de verificación...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Mostrar estado de verificación si ya está verificado o pendiente
+  if (verificationStatus === 'approved') {
+    return (
+      <div className="max-w-4xl mx-auto space-y-8">
+        <div className="text-center space-y-4">
+          <div className="w-20 h-20 mx-auto bg-green-100 rounded-full flex items-center justify-center">
+            <CheckCircle className="h-12 w-12 text-green-600" />
+          </div>
+          <h1 className="text-3xl font-bold text-foreground">¡Perfil Verificado!</h1>
+          <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+            Tu perfil ha sido verificado exitosamente. Ahora puedes acceder a todos los servicios de la plataforma.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (verificationStatus === 'pending') {
+    return (
+      <div className="max-w-4xl mx-auto space-y-8">
+        <div className="text-center space-y-4">
+          <div className="w-20 h-20 mx-auto bg-yellow-100 rounded-full flex items-center justify-center">
+            <Clock className="h-12 w-12 text-yellow-600" />
+          </div>
+          <h1 className="text-3xl font-bold text-foreground">Verificación en Proceso</h1>
+          <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+            Tu perfil está siendo revisado por nuestro equipo. Te notificaremos cuando esté listo.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (verificationStatus === 'rejected') {
+    return (
+      <div className="max-w-4xl mx-auto space-y-8">
+        <div className="text-center space-y-4">
+          <div className="w-20 h-20 mx-auto bg-red-100 rounded-full flex items-center justify-center">
+            <XCircle className="h-12 w-12 text-red-600" />
+          </div>
+          <h1 className="text-3xl font-bold text-foreground">Verificación Rechazada</h1>
+          <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+            Tu perfil no pudo ser verificado. Por favor, contacta al administrador para más información.
+          </p>
+        </div>
+      </div>
+    );
   }
 
   return (
