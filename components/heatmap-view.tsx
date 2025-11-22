@@ -1,4 +1,5 @@
 "use client"
+"use client"
 
 import { useEffect, useState } from "react"
 import dynamic from "next/dynamic"
@@ -8,7 +9,6 @@ import { Button } from "@/components/ui/button"
 import { MapPin, Users, Calendar, Heart, Shield, Megaphone, Navigation, RefreshCw } from "lucide-react"
 import { ActivitiesService, Activity } from "@/modules/infraestructura/firebase/ActivitiesService"
 import { LocationPermission } from "@/components/location-permission"
-import { useGeolocation } from "@/hooks/useGeolocation"
 
 // Importar Leaflet dinámicamente para evitar problemas de SSR
 const MapContainer = dynamic(() => import("react-leaflet").then((mod) => mod.MapContainer), { ssr: false })
@@ -16,8 +16,6 @@ const TileLayer = dynamic(() => import("react-leaflet").then((mod) => mod.TileLa
 const Marker = dynamic(() => import("react-leaflet").then((mod) => mod.Marker), { ssr: false })
 const Popup = dynamic(() => import("react-leaflet").then((mod) => mod.Popup), { ssr: false })
 const CircleMarker = dynamic(() => import("react-leaflet").then((mod) => mod.CircleMarker), { ssr: false })
-
-// Los tipos de Activity ahora se importan desde ActivitiesService
 
 // Configuración de categorías con colores
 const categoryConfig = {
@@ -51,9 +49,8 @@ const categoryConfig = {
   }
 }
 
-// Datos de ejemplo (en producción vendrían de Firebase)
+// Datos de ejemplo (Medellín)
 const mockActivities: Activity[] = [
-  // EVENTOS
   {
     id: '1',
     title: 'Jornada de Limpieza del Río Medellín',
@@ -63,58 +60,6 @@ const mockActivities: Activity[] = [
     longitude: -75.5700,
     participants: 45,
     date: '2025-09-25',
-<<<<<<< HEAD
-    status: 'upcoming'
-    ,
-    createdBy: 'system',
-    createdAt: new Date(),
-    updatedAt: new Date()
-  },
-  {
-    id: '2',
-    title: 'Colecta de Alimentos',
-    description: 'Recolección de alimentos no perecederos para familias vulnerables',
-    category: 'colectas',
-    latitude: 4.6200,
-    longitude: -74.0700,
-    participants: 23,
-    date: '2025-09-22',
-    status: 'active'
-    ,
-    createdBy: 'system',
-    createdAt: new Date(),
-    updatedAt: new Date()
-  },
-  {
-    id: '3',
-    title: 'Refugio Temporal San Cristóbal',
-    description: 'Centro de acogida para personas en situación de calle',
-    category: 'refugios',
-    latitude: 4.5800,
-    longitude: -74.0900,
-    participants: 12,
-    date: '2025-09-20',
-    status: 'active'
-    ,
-    createdBy: 'system',
-    createdAt: new Date(),
-    updatedAt: new Date()
-  },
-  {
-    id: '4',
-    title: 'Marcha por la Paz',
-    description: 'Manifestación pacífica por la construcción de paz en la ciudad',
-    category: 'protestas',
-    latitude: 4.6000,
-    longitude: -74.0750,
-    participants: 150,
-    date: '2025-09-28',
-    status: 'upcoming'
-    ,
-    createdBy: 'system',
-    createdAt: new Date(),
-    updatedAt: new Date()
-=======
     status: 'upcoming',
     createdBy: 'admin',
     createdAt: new Date('2025-09-20'),
@@ -161,26 +106,9 @@ const mockActivities: Activity[] = [
     createdBy: 'admin',
     createdAt: new Date('2025-09-17'),
     updatedAt: new Date('2025-09-17')
->>>>>>> 20cb9d3db9f3f179f1f4d52b771279e49b0d8cec
   },
-
-  // COLECTAS
   {
     id: '5',
-<<<<<<< HEAD
-    title: 'Taller de Reciclaje',
-    description: 'Capacitación en técnicas de reciclaje y cuidado ambiental',
-    category: 'eventos',
-    latitude: 4.5900,
-    longitude: -74.0850,
-    participants: 30,
-    date: '2025-09-24',
-    status: 'upcoming'
-    ,
-    createdBy: 'system',
-    createdAt: new Date(),
-    updatedAt: new Date()
-=======
     title: 'Colecta de Alimentos - Comuna 13',
     description: 'Recolección de alimentos no perecederos para familias vulnerables de la Comuna 13. Punto de entrega en el parque principal.',
     category: 'colectas',
@@ -192,7 +120,6 @@ const mockActivities: Activity[] = [
     createdBy: 'admin',
     createdAt: new Date('2025-09-15'),
     updatedAt: new Date('2025-09-15')
->>>>>>> 20cb9d3db9f3f179f1f4d52b771279e49b0d8cec
   },
   {
     id: '6',
@@ -203,13 +130,6 @@ const mockActivities: Activity[] = [
     longitude: -75.5600,
     participants: 18,
     date: '2025-09-21',
-<<<<<<< HEAD
-    status: 'active'
-    ,
-    createdBy: 'system',
-    createdAt: new Date(),
-    updatedAt: new Date()
-=======
     status: 'active',
     createdBy: 'admin',
     createdAt: new Date('2025-09-14'),
@@ -243,8 +163,6 @@ const mockActivities: Activity[] = [
     createdAt: new Date('2025-09-13'),
     updatedAt: new Date('2025-09-13')
   },
-
-  // REFUGIOS
   {
     id: '9',
     title: 'Refugio Temporal Centro',
@@ -287,8 +205,6 @@ const mockActivities: Activity[] = [
     createdAt: new Date('2025-09-10'),
     updatedAt: new Date('2025-09-10')
   },
-
-  // PROTESTAS
   {
     id: '12',
     title: 'Marcha por la Paz - Medellín',
@@ -330,7 +246,6 @@ const mockActivities: Activity[] = [
     createdBy: 'admin',
     createdAt: new Date('2025-09-07'),
     updatedAt: new Date('2025-09-07')
->>>>>>> 20cb9d3db9f3f179f1f4d52b771279e49b0d8cec
   }
 ]
 
@@ -419,6 +334,28 @@ export function HeatmapView() {
       </div>
     )
   }
+
+  // Normalización / filtrado de coordenadas (defensivo)
+  const toNumber = (v: any): number | undefined => {
+    if (typeof v === 'number' && Number.isFinite(v)) return v
+    if (v == null) return undefined
+    const n = Number(v)
+    return Number.isFinite(n) ? n : undefined
+  }
+
+  const activitiesWithCoords = filteredActivities.filter((activity) => {
+    const a: any = activity
+    const rawLat = a.latitude ?? a.location?.latitude
+    const rawLng = a.longitude ?? a.location?.longitude
+    const lat = toNumber(rawLat)
+    const lng = toNumber(rawLng)
+    const ok = typeof lat === 'number' && typeof lng === 'number'
+    if (!ok) {
+      // eslint-disable-next-line no-console
+      console.warn(`Skipping activity ${activity.id} - missing/invalid coords`, { rawLat, rawLng, activity })
+    }
+    return ok
+  })
 
   return (
     <div className="w-full space-y-6">
@@ -519,105 +456,7 @@ export function HeatmapView() {
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               />
-              
-<<<<<<< HEAD
-              {
-                // Filtrar actividades que tengan coordenadas válidas. Algunas entradas en Firestore
-                // pueden no tener los campos `latitude`/`longitude` (o pueden almacenarse como GeoPoint
-                // en `location`). Aquí normalizamos y descartamos las actividades sin coords válidas
-                // para evitar el error de Leaflet: "Invalid LatLng object: (undefined, undefined)".
-                (() => {
-                  const toNumber = (v: any): number | undefined => {
-                    if (typeof v === 'number' && Number.isFinite(v)) return v
-                    if (v == null) return undefined
-                    const n = Number(v)
-                    return Number.isFinite(n) ? n : undefined
-                  }
 
-                  const activitiesWithCoords = filteredActivities.filter((activity) => {
-                    const a: any = activity
-                    const rawLat = a.latitude ?? a.location?.latitude
-                    const rawLng = a.longitude ?? a.location?.longitude
-                    const lat = toNumber(rawLat)
-                    const lng = toNumber(rawLng)
-                    const ok = typeof lat === 'number' && typeof lng === 'number'
-                    if (!ok) {
-                      // Loguear para depuración en desarrollo (no rompe la UI)
-                      // eslint-disable-next-line no-console
-                      console.warn(`Skipping activity ${activity.id} - missing/invalid coords`, { rawLat, rawLng, activity })
-                    }
-                    return ok
-                  })
-
-                  return activitiesWithCoords.map((activity) => {
-                    const config = categoryConfig[activity.category]
-                    const Icon = config.icon
-                    const a: any = activity
-                    const rawLat = a.latitude ?? a.location?.latitude
-                    const rawLng = a.longitude ?? a.location?.longitude
-                    const lat = toNumber(rawLat) as number
-                    const lng = toNumber(rawLng) as number
-
-                    return (
-                      <CircleMarker
-                        key={activity.id}
-                        center={[lat, lng]}
-                        radius={Math.max(8, Math.min(20, activity.participants / 5))}
-                        pathOptions={{
-                          color: config.color,
-                          fillColor: config.color,
-                          fillOpacity: 0.6,
-                          weight: 2
-                        }}
-                      >
-                        <Popup>
-                          <div className="p-2 min-w-[250px]">
-                            <div className="flex items-start gap-3 mb-3">
-                              <div className={`w-8 h-8 rounded-full ${config.bgColor} flex items-center justify-center flex-shrink-0`}>
-                                <Icon className={`h-4 w-4 ${config.textColor}`} />
-                              </div>
-                              <div className="flex-1">
-                                <h3 className="font-semibold text-sm mb-1">{activity.title}</h3>
-                                <Badge 
-                                  variant="outline" 
-                                  className={`text-xs ${config.textColor} border-current`}
-                                >
-                                  {config.label}
-                                </Badge>
-                              </div>
-                            </div>
-                            
-                            <p className="text-xs text-muted-foreground mb-3 leading-relaxed">
-                              {activity.description}
-                            </p>
-                            
-                            <div className="space-y-2 text-xs">
-                              <div className="flex items-center gap-2">
-                                <Users className="h-3 w-3 text-muted-foreground" />
-                                <span>{activity.participants} participantes</span>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <Calendar className="h-3 w-3 text-muted-foreground" />
-                                <span>{new Date(activity.date).toLocaleDateString('es-CO')}</span>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <div className={`w-2 h-2 rounded-full ${
-                                  activity.status === 'active' ? 'bg-green-500' :
-                                  activity.status === 'upcoming' ? 'bg-blue-500' : 'bg-gray-500'
-                                }`}></div>
-                                <span className="capitalize">
-                                  {activity.status === 'active' ? 'Activo' :
-                                   activity.status === 'upcoming' ? 'Próximo' : 'Completado'}
-                                </span>
-                              </div>
-                            </div>
-                            
-                            <div className="mt-3 pt-3 border-t">
-                              <button className="w-full text-xs bg-primary text-primary-foreground px-3 py-1.5 rounded hover:bg-primary/90 transition-colors">
-                                Ver Detalles
-                              </button>
-                            </div>
-=======
               {/* Marcador de la ubicación del usuario */}
               {userLocation && (
                 <Marker position={userLocation}>
@@ -635,15 +474,18 @@ export function HeatmapView() {
                   </Popup>
                 </Marker>
               )}
-              
-              {filteredActivities.map((activity) => {
+
+              {activitiesWithCoords.map((activity) => {
                 const config = categoryConfig[activity.category]
                 const Icon = config.icon
-                
+                const a: any = activity
+                const lat = toNumber(a.latitude ?? a.location?.latitude) as number
+                const lng = toNumber(a.longitude ?? a.location?.longitude) as number
+
                 return (
                   <CircleMarker
                     key={activity.id}
-                    center={[activity.latitude, activity.longitude]}
+                    center={[lat, lng]}
                     radius={Math.max(8, Math.min(20, activity.participants / 5))}
                     pathOptions={{
                       color: config.color,
@@ -657,14 +499,53 @@ export function HeatmapView() {
                         <div className="flex items-start gap-3 mb-3">
                           <div className={`w-8 h-8 rounded-full ${config.bgColor} flex items-center justify-center flex-shrink-0`}>
                             <Icon className={`h-4 w-4 ${config.textColor}`} />
->>>>>>> 20cb9d3db9f3f179f1f4d52b771279e49b0d8cec
                           </div>
-                        </Popup>
-                      </CircleMarker>
-                    )
-                  })
-                })()
-              }
+                          <div className="flex-1">
+                            <h3 className="font-semibold text-sm mb-1">{activity.title}</h3>
+                            <Badge 
+                              variant="outline" 
+                              className={`text-xs ${config.textColor} border-current`}
+                            >
+                              {config.label}
+                            </Badge>
+                          </div>
+                        </div>
+                        
+                        <p className="text-xs text-muted-foreground mb-3 leading-relaxed">
+                          {activity.description}
+                        </p>
+                        
+                        <div className="space-y-2 text-xs">
+                          <div className="flex items-center gap-2">
+                            <Users className="h-3 w-3 text-muted-foreground" />
+                            <span>{activity.participants} participantes</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Calendar className="h-3 w-3 text-muted-foreground" />
+                            <span>{new Date(activity.date).toLocaleDateString('es-CO')}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <div className={`w-2 h-2 rounded-full ${
+                              activity.status === 'active' ? 'bg-green-500' :
+                              activity.status === 'upcoming' ? 'bg-blue-500' : 'bg-gray-500'
+                            }`}></div>
+                            <span className="capitalize">
+                              {activity.status === 'active' ? 'Activo' :
+                               activity.status === 'upcoming' ? 'Próximo' : 'Completado'}
+                            </span>
+                          </div>
+                        </div>
+                        
+                        <div className="mt-3 pt-3 border-t">
+                          <button className="w-full text-xs bg-primary text-primary-foreground px-3 py-1.5 rounded hover:bg-primary/90 transition-colors">
+                            Ver Detalles
+                          </button>
+                        </div>
+                      </div>
+                    </Popup>
+                  </CircleMarker>
+                )
+              })}
             </MapContainer>
           </div>
         </CardContent>
@@ -704,3 +585,4 @@ export function HeatmapView() {
     </div>
   )
 }
+
