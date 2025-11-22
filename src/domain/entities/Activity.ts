@@ -15,6 +15,8 @@ export interface Activity {
 export type ActivityCategory = 'eventos' | 'colectas' | 'refugios' | 'protestas';
 export type ActivityStatus = 'active' | 'completed' | 'upcoming';
 
+
+
 export interface Location {
   latitude: number;
   longitude: number;

@@ -6,7 +6,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Upload, Camera, FileText, MapPin, Link, User, Mail, Phone, CheckCircle, Clock, XCircle } from "lucide-react"
+import { Upload, Camera, FileText, MapPin, Link, User, Mail, Phone, CheckCircle, Clock, XCircle, RefreshCw } from "lucide-react"
+import { Switch } from "@/components/ui/switch"
 import { toast } from "sonner"
 import { ProfileService, ProfileData as ServiceProfileData, DocumentUpload as ServiceDocumentUpload } from "@/modules/domain/profile/ProfileService"
 import { useAuth } from "@/hooks/useAuth"
@@ -23,6 +24,8 @@ interface ProfileData {
   }
   phone: string
   email: string
+  isBusiness?: boolean
+  isBusinessConfirmed?: boolean
 }
 
 interface DocumentUpload {
@@ -38,8 +41,11 @@ export function ProfileVerification() {
     location: "",
     socialMedia: {},
     phone: "",
-    email: ""
+    email: "",
+    isBusiness: false
   })
+  const [isConfirmingBusiness, setIsConfirmingBusiness] = useState(false)
+  const [showConfirmModal, setShowConfirmModal] = useState(false)
 
   const [documents, setDocuments] = useState<DocumentUpload>({
     cameraDocument: null,
@@ -47,6 +53,7 @@ export function ProfileVerification() {
   })
 
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isUpdating, setIsUpdating] = useState(false)
   const [verificationStatus, setVerificationStatus] = useState<'none' | 'pending' | 'approved' | 'rejected'>('none')
   const [isLoading, setIsLoading] = useState(true)
 
@@ -68,7 +75,9 @@ export function ProfileVerification() {
             location: userProfile.location,
             socialMedia: userProfile.socialMedia,
             phone: userProfile.phone,
-            email: userProfile.email
+            email: userProfile.email,
+            isBusiness: (userProfile as any).isBusiness || false,
+            isBusinessConfirmed: (userProfile as any).isBusinessConfirmed || false
           });
         } else {
           setVerificationStatus('none');
@@ -89,12 +98,91 @@ export function ProfileVerification() {
 
     loadProfileStatus();
   }, [authUser, authLoading]);
+  // Si el estado está en 'pending', iniciar temporizador para volver automáticamente al perfil
+  // Este hook debe ejecutarse siempre (no condicionalmente) para mantener el orden de hooks
+  useEffect(() => {
+    if (verificationStatus !== 'pending') return;
+
+    const timer = setTimeout(async () => {
+      try {
+        // Intentar reconsultar el perfil y volver a la vista principal
+        if (authUser) {
+          const refreshed = await ProfileService.getUserProfile(authUser.uid);
+          if (refreshed) {
+            setProfileData({
+              fullName: refreshed.fullName || "",
+              description: refreshed.description || "",
+              location: refreshed.location || "",
+              socialMedia: refreshed.socialMedia || {},
+              phone: refreshed.phone || "",
+              email: refreshed.email || "",
+              isBusiness: (refreshed as any).isBusiness || false,
+              isBusinessConfirmed: (refreshed as any).isBusinessConfirmed || false
+            });
+            // Actualizar el estado según lo que venga del backend
+            setVerificationStatus(refreshed.verificationStatus || 'none');
+          } else {
+            setVerificationStatus('none');
+          }
+        } else {
+          setVerificationStatus('none');
+        }
+      } catch (err) {
+        console.warn('No se pudo reconsultar perfil tras pending timeout:', err);
+        setVerificationStatus('none');
+      }
+    }, 7000);
+
+    return () => clearTimeout(timer);
+  }, [verificationStatus, authUser]);
 
   const handleInputChange = (field: keyof ProfileData, value: string) => {
     setProfileData(prev => ({
       ...prev,
       [field]: value
     }))
+  }
+
+  const handleIsBusinessChange = (value: boolean) => {
+    // If user is trying to enable business mode and it's not confirmed yet, show confirm modal
+    if (value && !profileData.isBusinessConfirmed) {
+      setShowConfirmModal(true)
+      return
+    }
+
+    // If already confirmed, prevent switching back to false
+    if (!value && profileData.isBusinessConfirmed) {
+      toast.error("No se puede revertir: la condición de persona jurídica ya fue confirmada.")
+      return
+    }
+
+    setProfileData(prev => ({
+      ...prev,
+      isBusiness: value
+    }))
+
+    if (!value) {
+      // Clear documents if switching off business
+      setDocuments({ cameraDocument: null, commerceDocument: null })
+    }
+  }
+
+  const confirmBusiness = async () => {
+    if (!authUser) return
+    setIsConfirmingBusiness(true)
+    try {
+      // set flags locally and persist
+      const updated = { ...profileData, isBusiness: true, isBusinessConfirmed: true }
+      setProfileData(updated)
+      await ProfileService.updateProfile(authUser.uid, ProfileService.formatProfileData(updated as any))
+      toast.success("Has confirmado que eres persona jurídica. Esta decisión no se puede revertir.")
+      setShowConfirmModal(false)
+    } catch (err: any) {
+      console.error("Error al confirmar persona jurídica:", err)
+      toast.error(err?.message || "No se pudo confirmar. Intenta nuevamente.")
+    } finally {
+      setIsConfirmingBusiness(false)
+    }
   }
 
   const handleSocialMediaChange = (platform: string, value: string) => {
@@ -121,9 +209,11 @@ export function ProfileVerification() {
       return
     }
 
-    if (!documents.cameraDocument || !documents.commerceDocument) {
-      toast.error("Por favor sube ambos documentos requeridos")
-      return
+    if (profileData.isBusiness) {
+      if (!documents.cameraDocument || !documents.commerceDocument) {
+        toast.error("Por favor sube ambos documentos requeridos")
+        return
+      }
     }
 
     // Formatear datos del perfil
@@ -144,31 +234,102 @@ export function ProfileVerification() {
     }
 
     setIsSubmitting(true)
+    console.log("ProfileVerification: start submitProfileVerification for", authUser.uid, { formattedProfileData, hasCamera: !!documents.cameraDocument, hasCommerce: !!documents.commerceDocument })
+
     try {
-      // Procesar verificación de perfil usando el usuario autenticado
-      await ProfileService.submitProfileVerification(
-        authUser.uid,
-        formattedProfileData,
+      await toast.promise(
+        ProfileService.submitProfileVerification(
+          authUser.uid,
+          formattedProfileData,
+          {
+            cameraDocument: documents.cameraDocument,
+            commerceDocument: documents.commerceDocument
+          }
+        ),
         {
-          cameraDocument: documents.cameraDocument,
-          commerceDocument: documents.commerceDocument
+          loading: 'Subiendo documentos y guardando perfil...',
+          success: 'Perfil enviado para verificación. Te notificaremos cuando esté listo.',
+          error: (err: any) => {
+            console.error('ProfileVerification: submitProfileVerification failed', err)
+            return err?.message || 'Uy, error al enviar documentos. Intenta nuevamente.'
+          }
         }
       )
 
-      toast.success("Perfil enviado para verificación. Te notificaremos cuando esté listo.")
+      console.log("ProfileVerification: submitProfileVerification resolved for", authUser.uid)
       setVerificationStatus('pending')
-      
+
       // Limpiar documentos después del envío exitoso
-      setDocuments({
-        cameraDocument: null,
-        commerceDocument: null
-      })
-      
+      setDocuments({ cameraDocument: null, commerceDocument: null })
     } catch (error: any) {
-      console.error("Error al enviar perfil:", error)
-      toast.error(error.message || "Error al enviar el perfil. Intenta nuevamente.")
+      // toast.promise already mostró el error; sólo logueamos para trazabilidad
+      console.error("Error al enviar perfil (capturado):", error)
     } finally {
       setIsSubmitting(false)
+    }
+  }
+
+  const handleUpdate = async () => {
+    if (!authUser) {
+      toast.error("Debes estar autenticado para actualizar el perfil")
+      return
+    }
+
+    const formattedProfileData = ProfileService.formatProfileData(profileData)
+    console.log("ProfileVerification: formattedProfileData before validation", formattedProfileData)
+    const validationErrors = ProfileService.validateProfileUpdate(formattedProfileData)
+    if (validationErrors.length > 0) {
+      console.warn("ProfileVerification: validationErrors", validationErrors)
+      validationErrors.forEach(err => toast.error(err))
+      return
+    }
+
+    setIsUpdating(true)
+    try {
+      console.log("ProfileVerification: updating profile for", authUser.uid, formattedProfileData)
+      await ProfileService.updateProfile(authUser.uid, formattedProfileData)
+      console.log("ProfileVerification: updateProfile returned for", authUser.uid)
+
+      // Re-fetch profile to ensure we show canonical data from backend
+      try {
+        console.log("ProfileVerification: attempting to refetch profile for", authUser.uid)
+        const refreshed = await ProfileService.getUserProfile(authUser.uid)
+        console.log("ProfileVerification: refetch returned", refreshed)
+        if (refreshed) {
+          setProfileData({
+            fullName: refreshed.fullName || "",
+            description: refreshed.description || "",
+            location: refreshed.location || "",
+            socialMedia: refreshed.socialMedia || {},
+            phone: refreshed.phone || "",
+            email: refreshed.email || "",
+            isBusiness: (refreshed as any).isBusiness || false
+          })
+        }
+      } catch (fetchErr) {
+        // Non-blocking: log and continue — update already succeeded server-side
+        console.warn("ProfileVerification: could not refetch profile after update:", fetchErr)
+      }
+      console.log("ProfileVerification: about to show success toast")
+      toast.success("Sus cambios se han hecho con satisfacción")
+    } catch (error: any) {
+      console.error("Error al actualizar perfil:", error)
+      // Mostrar mensaje sencillo de error junto al detalle si está disponible
+      const msg = error?.message ? `Datos no cambiados: ${error.message}` : "Datos no cambiados"
+      toast.error(msg)
+    } finally {
+      console.log("ProfileVerification: entering finally, will setIsUpdating(false)")
+      setIsUpdating(false)
+    }
+  }
+
+  // Wrapper for the button to help debug clicks (logs visible in browser console)
+  const handleUpdateClick = async () => {
+    console.log("ProfileVerification: Save button clicked")
+    try {
+      await handleUpdate()
+    } catch (err) {
+      console.error("ProfileVerification: unhandled error from handleUpdate:", err)
     }
   }
 
@@ -183,6 +344,8 @@ export function ProfileVerification() {
       </div>
     );
   }
+
+
 
   // Mostrar estado de verificación si ya está verificado o pendiente
   if (verificationStatus === 'approved') {
@@ -326,8 +489,54 @@ export function ProfileVerification() {
                 className="min-h-[100px] resize-none"
               />
             </div>
+
+            <div className="flex items-center gap-3">
+              <Label className="text-sm font-medium">¿Eres persona jurídica?</Label>
+              <div className="flex items-center gap-2">
+                <Switch
+                  checked={!!profileData.isBusiness}
+                  onCheckedChange={(v: boolean) => handleIsBusinessChange(v)}
+                  disabled={!!profileData.isBusinessConfirmed}
+                  className="data-[state=checked]:bg-emerald-600 data-[state=unchecked]:bg-gray-600"
+                />
+                <span className="text-sm">{profileData.isBusiness ? 'Sí' : 'No'}</span>
+                {profileData.isBusinessConfirmed ? (
+                  <span className="ml-3 inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-green-600 text-white">
+                    Jurídico · Confirmado
+                  </span>
+                ) : null}
+              </div>
+            </div>
           </CardContent>
         </Card>
+
+        {/* Confirm modal for persona jurídica */}
+        {showConfirmModal ? (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+            <div className="bg-background p-6 rounded-md w-full max-w-md shadow-lg">
+              <h3 className="text-lg font-semibold mb-4">Confirmar: Persona Jurídica</h3>
+              <p className="mb-4 text-sm text-muted-foreground">
+                Al confirmar que eres persona jurídica, deberás subir los documentos requeridos y esta decisión no podrá ser revertida. ¿Deseas continuar?
+              </p>
+              <div className="flex justify-end gap-3">
+                <button
+                  className="px-4 py-2 rounded-md border"
+                  onClick={() => setShowConfirmModal(false)}
+                  disabled={isConfirmingBusiness}
+                >
+                  Cancelar
+                </button>
+                <button
+                  className="px-4 py-2 rounded-md bg-green-600 text-white"
+                  onClick={confirmBusiness}
+                  disabled={isConfirmingBusiness}
+                >
+                  {isConfirmingBusiness ? 'Confirmando...' : 'Aceptar y confirmar'}
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : null}
 
         {/* Redes Sociales */}
         <Card className="shadow-lg border-0">
@@ -398,8 +607,9 @@ export function ProfileVerification() {
         </Card>
       </div>
 
-      {/* Documentos */}
-      <Card className="shadow-lg border-0">
+      {/* Documentos (solo para personas jurídicas) */}
+      {profileData.isBusiness ? (
+        <Card className="shadow-lg border-0">
         <CardHeader className="space-y-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
@@ -487,18 +697,40 @@ export function ProfileVerification() {
             </p>
           </div>
         </CardContent>
-      </Card>
+        </Card>
+      ) : null}
 
       {/* Botón de Envío */}
       <div className="flex justify-center">
-        <Button
-          onClick={handleSubmit}
-          disabled={isSubmitting}
-          size="lg"
-          className="h-12 px-8 text-base font-semibold"
-        >
-          {isSubmitting ? "Enviando..." : "Enviar para Verificación"}
-        </Button>
+        <div className="flex gap-3">
+          <Button
+            onClick={handleUpdateClick}
+            disabled={isUpdating}
+            size="lg"
+            className="h-12 px-6 text-base font-semibold"
+            variant="outline"
+          >
+            {isUpdating ? (
+              <span className="flex items-center gap-2">
+                <RefreshCw className="h-4 w-4 animate-spin" />
+                Guardando...
+              </span>
+            ) : (
+              "Guardar cambios"
+            )}
+          </Button>
+
+          {profileData.isBusiness ? (
+            <Button
+              onClick={handleSubmit}
+              disabled={isSubmitting}
+              size="lg"
+              className="h-12 px-8 text-base font-semibold"
+            >
+              {isSubmitting ? "Enviando..." : "Enviar para Verificación"}
+            </Button>
+          ) : null}
+        </div>
       </div>
     </div>
   )

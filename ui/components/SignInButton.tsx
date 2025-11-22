@@ -1,9 +1,9 @@
 "use client";
-import { useCases } from "@/app/di";
+import { signInWithGoogle } from "@/modules/domain/auth/firebaseAuth";
 
 export function SignInButton() {
   return (
-    <button onClick={() => useCases.signInWithGoogle()}>
+    <button onClick={() => signInWithGoogle()}>
       Iniciar sesión con Google
     </button>
   );

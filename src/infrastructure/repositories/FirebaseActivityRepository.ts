@@ -1,7 +1,8 @@
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, where, orderBy } from 'firebase/firestore';
 import { getFirestore } from 'firebase/firestore';
 import { firebaseApp } from '../../../firebase/clientApp';
-import { Activity, CreateActivityRequest, UpdateActivityRequest, ActivityStats } from '../../domain/entities/Activity';
+import { Activity, CreateActivityRequest, UpdateActivityRequest } from '../../domain/entities/Activity';
+import { ActivityStats } from '../../domain/repositories/ActivityRepository';
 import { ActivityRepository } from '../../domain/repositories/ActivityRepository';
 
 export class FirebaseActivityRepository implements ActivityRepository {
