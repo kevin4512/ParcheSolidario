@@ -61,6 +61,39 @@ export class ProfileRepository {
   }
 
   /**
+   * Crea un documento de perfil mínimo a partir del usuario de Auth si no existe.
+   * Esto se usa para garantizar que haya un documento sobre el que poder hacer update posteriormente.
+   */
+  static async ensureProfileExistsFromAuth(user: any): Promise<void> {
+    try {
+      if (!user || !user.uid) return;
+      const profileRef = doc(db, this.COLLECTION_NAME, user.uid);
+      const profileSnap = await getDoc(profileRef);
+      if (!profileSnap.exists()) {
+        const baseProfile: any = {
+          fullName: user.displayName || "",
+          email: user.email || "",
+          location: "",
+          description: "",
+          socialMedia: {},
+          phone: "",
+          userId: user.uid,
+          isVerified: false,
+          verificationStatus: 'none',
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+          documents: {}
+        };
+
+        await setDoc(profileRef, baseProfile, { merge: true });
+      }
+    } catch (error) {
+      console.error("Error al asegurar perfil desde Auth:", error);
+      throw error;
+    }
+  }
+
+  /**
    * Obtiene el perfil de un usuario
    */
   static async getProfile(userId: string): Promise<UserProfile | null> {
@@ -121,6 +154,28 @@ export class ProfileRepository {
       return profiles;
     } catch (error) {
       console.error("Error al obtener perfiles pendientes:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Actualiza campos del perfil de un usuario (sin tocar documentos ni verificationStatus a menos que se indique)
+   */
+  static async updateProfile(userId: string, updateData: Partial<ProfileData>): Promise<void> {
+    try {
+      const profileRef = doc(db, this.COLLECTION_NAME, userId);
+      // Debug: log payload
+      console.log("ProfileRepository.updateProfile: userId=", userId, "updateData=", updateData);
+      // Use setDoc with merge so that if the document does not exist it will be created.
+      await setDoc(profileRef, {
+        ...updateData,
+        updatedAt: serverTimestamp()
+      }, { merge: true });
+
+      // Confirm success
+      console.log("ProfileRepository.updateProfile: setDoc successful for", userId);
+    } catch (error) {
+      console.error("Error al actualizar perfil:", error);
       throw error;
     }
   }

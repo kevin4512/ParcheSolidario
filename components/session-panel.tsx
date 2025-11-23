@@ -122,6 +122,7 @@ interface SessionPanelProps {
       );
     }
 
+
     return (
       <ActivitiesProvider>
       <div className="w-full min-h-screen bg-background flex flex-col items-center justify-center">
@@ -189,7 +190,7 @@ interface SessionPanelProps {
                 </nav>
               </div>
               <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
-                <span className="block text-sm text-center sm:text-left w-full">Bienvenido, {user.displayName}</span>
+                <span className="block text-sm text-center sm:text-left w-full">Bienvenido, {firstName}</span>
                 <img
                   src={user.photoURL || "/placeholder.svg?height=64&width=64&query=user+avatar"}
                   alt="Avatar"
@@ -213,8 +214,8 @@ interface SessionPanelProps {
             <div className="space-y-10 md:space-y-16">
               {/* Hero Section */}
               <section className="text-center py-8 md:py-16">
-                <h1 className="text-3xl md:text-5xl font-bold text-foreground mb-6 text-balance">
-                  Hola {user?.displayName}, <br />
+                  <h1 className="text-3xl md:text-5xl font-bold text-foreground mb-6 text-balance">
+                  Hola {firstName}, <br />
                   <span className="text-primary">Transforma tu comunidad</span>
                 </h1>
                 <p className="text-base md:text-xl text-muted-foreground mb-8 max-w-3xl mx-auto text-pretty leading-relaxed">

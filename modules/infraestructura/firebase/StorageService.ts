@@ -1,4 +1,4 @@
-import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import { firebaseApp } from "../../../firebase/clientApp";
 
 const storage = getStorage(firebaseApp);
@@ -81,6 +81,20 @@ export class StorageService {
     } catch (error) {
       console.error("Error al subir documentos de verificación:", error);
       throw error;
+    }
+  }
+
+  /**
+   * Elimina un archivo de Firebase Storage dado su path
+   * @param path - Ruta completa en storage (ej: verification-documents/{userId}/...)
+   */
+  static async deleteFile(path: string): Promise<void> {
+    try {
+      const storageRef = ref(storage, path);
+      await deleteObject(storageRef);
+    } catch (error) {
+      // No hagas fail hard: solo loguear. En algunos casos el archivo puede no existir.
+      console.warn("StorageService.deleteFile: no se pudo eliminar el archivo", path, error);
     }
   }
 }

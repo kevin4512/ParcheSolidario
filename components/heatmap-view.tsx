@@ -1,4 +1,5 @@
 "use client"
+"use client"
 
 import { useEffect, useState } from "react"
 import dynamic from "next/dynamic"
@@ -9,7 +10,6 @@ import { MapPin, Users, Calendar, Heart, Shield, Megaphone, Navigation, RefreshC
 import { ActivitiesService, Activity } from "@/modules/infraestructura/firebase/ActivitiesService"
 import { useActivitiesContext } from "@/contexts/ActivitiesContext"
 import { LocationPermission } from "@/components/location-permission"
-import { useGeolocation } from "@/hooks/useGeolocation"
 
 // Importar Leaflet dinámicamente para evitar problemas de SSR
 const MapContainer = dynamic(() => import("react-leaflet").then((mod) => mod.MapContainer), { ssr: false })
@@ -17,8 +17,6 @@ const TileLayer = dynamic(() => import("react-leaflet").then((mod) => mod.TileLa
 const Marker = dynamic(() => import("react-leaflet").then((mod) => mod.Marker), { ssr: false })
 const Popup = dynamic(() => import("react-leaflet").then((mod) => mod.Popup), { ssr: false })
 const CircleMarker = dynamic(() => import("react-leaflet").then((mod) => mod.CircleMarker), { ssr: false })
-
-// Los tipos de Activity ahora se importan desde ActivitiesService
 
 // Configuración de categorías con colores
 const categoryConfig = {
@@ -156,6 +154,28 @@ export function HeatmapView() {
     )
   }
 
+  // Normalización / filtrado de coordenadas (defensivo)
+  const toNumber = (v: any): number | undefined => {
+    if (typeof v === 'number' && Number.isFinite(v)) return v
+    if (v == null) return undefined
+    const n = Number(v)
+    return Number.isFinite(n) ? n : undefined
+  }
+
+  const activitiesWithCoords = filteredActivities.filter((activity) => {
+    const a: any = activity
+    const rawLat = a.latitude ?? a.location?.latitude
+    const rawLng = a.longitude ?? a.location?.longitude
+    const lat = toNumber(rawLat)
+    const lng = toNumber(rawLng)
+    const ok = typeof lat === 'number' && typeof lng === 'number'
+    if (!ok) {
+      // eslint-disable-next-line no-console
+      console.warn(`Skipping activity ${activity.id} - missing/invalid coords`, { rawLat, rawLng, activity })
+    }
+    return ok
+  })
+
   return (
     <div className="w-full space-y-6">
       {/* Header con estadísticas */}
@@ -255,7 +275,7 @@ export function HeatmapView() {
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               />
-              
+
               {/* Marcador de la ubicación del usuario */}
               {userLocation && (
                 <Marker position={userLocation}>
@@ -273,6 +293,7 @@ export function HeatmapView() {
                   </Popup>
                 </Marker>
               )}
+
               
               {filteredActivities
                 .filter(activity => 
@@ -282,14 +303,20 @@ export function HeatmapView() {
                   !isNaN(activity.longitude)
                 )
                 .map((activity) => {
+
                 const config = categoryConfig[activity.category]
                 const Icon = config.icon
-                
+                const a: any = activity
+                const lat = toNumber(a.latitude ?? a.location?.latitude) as number
+                const lng = toNumber(a.longitude ?? a.location?.longitude) as number
+
                 return (
                   <CircleMarker
                     key={activity.id}
+
                     center={[activity.latitude, activity.longitude]}
                     radius={Math.max(8, Math.min(20, (activity.participants || 0) / 5))}
+
                     pathOptions={{
                       color: config.color,
                       fillColor: config.color,
@@ -388,3 +415,4 @@ export function HeatmapView() {
     </div>
   )
 }
+

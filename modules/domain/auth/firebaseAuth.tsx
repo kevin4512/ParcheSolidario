@@ -26,6 +26,16 @@ export async function signInWithGoogle() {
     // Esto abrirá una ventana emergente donde el usuario podrá seleccionar su cuenta de Google
     const result = await signInWithPopup(auth, provider);
     // result.user contiene la información del usuario autenticado
+    // Asegurarnos de que exista un documento de perfil mínimo en Firestore para este usuario
+    try {
+      const { ProfileRepository } = await import("../../infraestructura/firebase/ProfileRepository");
+      await ProfileRepository.ensureProfileExistsFromAuth(result.user);
+    } catch (e) {
+      // No queremos bloquear el login si la creación del doc falla; logueamos el error
+      // eslint-disable-next-line no-console
+      console.warn('No se pudo asegurar el perfil en Firestore después del login:', e);
+    }
+
     return result.user;
   } catch (error) {
     // Si ocurre un error, lo lanzamos para que el componente lo maneje

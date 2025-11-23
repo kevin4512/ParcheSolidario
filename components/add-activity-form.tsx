@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { MapPin, Plus, Calendar, Users } from "lucide-react"
 import { toast } from "sonner"
+
 import { ActivitiesService, CreateActivityData, Activity } from "@/modules/infraestructura/firebase/ActivitiesService"
 import { useAuth } from "@/hooks/useAuth"
 import { useActivitiesContext } from "@/contexts/ActivitiesContext"
@@ -18,6 +19,7 @@ export function AddActivityForm() {
   const { addActivity } = useActivitiesContext()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [formData, setFormData] = useState<CreateActivityData>({
+
     title: "",
     description: "",
     category: "eventos",
@@ -31,9 +33,10 @@ export function AddActivityForm() {
     fundraisingGoal: "",
     status: "upcoming",
     createdBy: user?.uid || ""
+
   })
 
-  const handleInputChange = (field: keyof CreateActivityData, value: string | number) => {
+  const handleInputChange = (field: keyof CreateActivityDto, value: string | number) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
@@ -108,7 +111,6 @@ export function AddActivityForm() {
       return
     }
 
-    setIsSubmitting(true)
     try {
       const activityId = await ActivitiesService.createActivity({
         ...formData,
@@ -128,6 +130,7 @@ export function AddActivityForm() {
       addActivity(newActivity)
       
       toast.success("Evento publicado exitosamente")
+
       
       // Limpiar formulario
       setFormData({
@@ -144,13 +147,12 @@ export function AddActivityForm() {
         fundraisingGoal: "",
         status: "upcoming",
         createdBy: user.uid
+
       })
       
     } catch (error) {
       console.error("Error al crear actividad:", error)
       toast.error("Error al crear la actividad")
-    } finally {
-      setIsSubmitting(false)
     }
   }
 
@@ -341,21 +343,23 @@ export function AddActivityForm() {
                 participants: 0,
                 capacity: 0,
                 date: "",
+
                 time: "",
                 location: "",
                 fundraisingGoal: "",
                 status: "upcoming",
                 createdBy: user?.uid || ""
+
               })}
             >
               Limpiar
             </Button>
             <Button
               type="submit"
-              disabled={isSubmitting}
+              disabled={loading}
               className="flex items-center gap-2"
             >
-              {isSubmitting ? (
+              {loading ? (
                 <>
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
                   Publicando...
