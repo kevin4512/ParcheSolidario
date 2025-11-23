@@ -36,7 +36,7 @@ export function AddActivityForm() {
 
   })
 
-  const handleInputChange = (field: keyof CreateActivityDto, value: string | number) => {
+  const handleInputChange = (field: keyof CreateActivityData, value: string | number) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
