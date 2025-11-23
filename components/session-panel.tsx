@@ -106,6 +106,8 @@ interface SessionPanelProps {
         window.removeEventListener("scroll", handleScroll);
       };
     }, [activeSection, hasShownScrollAlert]);
+    const firstName = user?.displayName?.split(/\s+/)?.filter(Boolean)?.[0] || user?.email?.split('@')?.[0] || 'Usuario';
+
     if (!user) {
       return (
         <div className="min-h-screen bg-background flex items-center justify-center p-4">

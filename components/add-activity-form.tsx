@@ -111,6 +111,7 @@ export function AddActivityForm() {
       return
     }
 
+    setIsSubmitting(true)
     try {
       const activityId = await ActivitiesService.createActivity({
         ...formData,
@@ -153,6 +154,8 @@ export function AddActivityForm() {
     } catch (error) {
       console.error("Error al crear actividad:", error)
       toast.error("Error al crear la actividad")
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -356,10 +359,10 @@ export function AddActivityForm() {
             </Button>
             <Button
               type="submit"
-              disabled={loading}
+              disabled={isSubmitting}
               className="flex items-center gap-2"
             >
-              {loading ? (
+              {isSubmitting ? (
                 <>
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
                   Publicando...
