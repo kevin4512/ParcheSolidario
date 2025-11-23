@@ -4,215 +4,13 @@ import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Calendar, Users, MapPin, Heart, Shield, Megaphone } from "lucide-react"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Calendar, Users, MapPin, Heart, Shield, Megaphone, Clock, Target } from "lucide-react"
 import { Activity } from "@/modules/infraestructura/firebase/ActivitiesService"
+import { useActivitiesContext } from "@/contexts/ActivitiesContext"
 
-// Datos de ejemplo (mismos que en heatmap-view.tsx)
-const mockActivities: Activity[] = [
-  // EVENTOS
-  {
-    id: '1',
-    title: 'Jornada de Limpieza del Río Medellín',
-    description: 'Limpieza comunitaria del río Medellín en el sector de El Poblado. Incluye recolección de basura y siembra de árboles nativos.',
-    category: 'eventos',
-    latitude: 6.2000,
-    longitude: -75.5700,
-    participants: 45,
-    date: '2025-09-25',
-    status: 'upcoming',
-    createdBy: 'admin',
-    createdAt: new Date('2025-09-20'),
-    updatedAt: new Date('2025-09-20')
-  },
-  {
-    id: '2',
-    title: 'Taller de Reciclaje - Laureles',
-    description: 'Capacitación en técnicas de reciclaje y cuidado ambiental en el parque de Laureles. Aprende a separar residuos correctamente.',
-    category: 'eventos',
-    latitude: 6.2300,
-    longitude: -75.5900,
-    participants: 30,
-    date: '2025-09-24',
-    status: 'upcoming',
-    createdBy: 'admin',
-    createdAt: new Date('2025-09-19'),
-    updatedAt: new Date('2025-09-19')
-  },
-  {
-    id: '3',
-    title: 'Festival de Arte Urbano - Comuna 13',
-    description: 'Celebración del arte y la cultura en la Comuna 13. Incluye murales, música y actividades para toda la familia.',
-    category: 'eventos',
-    latitude: 6.2500,
-    longitude: -75.5700,
-    participants: 80,
-    date: '2025-09-30',
-    status: 'upcoming',
-    createdBy: 'admin',
-    createdAt: new Date('2025-09-18'),
-    updatedAt: new Date('2025-09-18')
-  },
-  {
-    id: '4',
-    title: 'Caminata Ecológica - Cerro Nutibara',
-    description: 'Caminata guiada por el Cerro Nutibara para conocer la flora y fauna local. Incluye charla sobre conservación ambiental.',
-    category: 'eventos',
-    latitude: 6.2200,
-    longitude: -75.6000,
-    participants: 25,
-    date: '2025-09-26',
-    status: 'upcoming',
-    createdBy: 'admin',
-    createdAt: new Date('2025-09-17'),
-    updatedAt: new Date('2025-09-17')
-  },
-
-  // COLECTAS
-  {
-    id: '5',
-    title: 'Colecta de Alimentos - Comuna 13',
-    description: 'Recolección de alimentos no perecederos para familias vulnerables de la Comuna 13. Punto de entrega en el parque principal.',
-    category: 'colectas',
-    latitude: 6.2500,
-    longitude: -75.5700,
-    participants: 23,
-    date: '2025-09-22',
-    status: 'active',
-    createdBy: 'admin',
-    createdAt: new Date('2025-09-15'),
-    updatedAt: new Date('2025-09-15')
-  },
-  {
-    id: '6',
-    title: 'Colecta de Medicamentos - Belén',
-    description: 'Recolección de medicamentos para el hospital de Belén. Se necesitan medicamentos para diabetes, hipertensión y enfermedades respiratorias.',
-    category: 'colectas',
-    latitude: 6.2600,
-    longitude: -75.5600,
-    participants: 18,
-    date: '2025-09-21',
-    status: 'active',
-    createdBy: 'admin',
-    createdAt: new Date('2025-09-14'),
-    updatedAt: new Date('2025-09-14')
-  },
-  {
-    id: '7',
-    title: 'Colecta de Ropa de Invierno - Centro',
-    description: 'Recolección de ropa de abrigo para personas en situación de calle. Se aceptan chaquetas, cobijas y ropa en buen estado.',
-    category: 'colectas',
-    latitude: 6.2442,
-    longitude: -75.5812,
-    participants: 35,
-    date: '2025-09-23',
-    status: 'active',
-    createdBy: 'admin',
-    createdAt: new Date('2025-09-16'),
-    updatedAt: new Date('2025-09-16')
-  },
-  {
-    id: '8',
-    title: 'Colecta de Útiles Escolares - Robledo',
-    description: 'Recolección de útiles escolares para niños de escasos recursos en Robledo. Se necesitan cuadernos, lápices, colores y mochilas.',
-    category: 'colectas',
-    latitude: 6.2800,
-    longitude: -75.6000,
-    participants: 42,
-    date: '2025-09-27',
-    status: 'upcoming',
-    createdBy: 'admin',
-    createdAt: new Date('2025-09-13'),
-    updatedAt: new Date('2025-09-13')
-  },
-
-  // REFUGIOS
-  {
-    id: '9',
-    title: 'Refugio Temporal Centro',
-    description: 'Centro de acogida para personas en situación de calle en el centro de Medellín. Ofrece comida caliente, duchas y ropa limpia.',
-    category: 'refugios',
-    latitude: 6.2400,
-    longitude: -75.5900,
-    participants: 12,
-    date: '2025-09-20',
-    status: 'active',
-    createdBy: 'admin',
-    createdAt: new Date('2025-09-12'),
-    updatedAt: new Date('2025-09-12')
-  },
-  {
-    id: '10',
-    title: 'Refugio de Emergencia - El Poblado',
-    description: 'Refugio temporal para familias desplazadas en El Poblado. Ofrece alojamiento temporal, alimentación y apoyo psicosocial.',
-    category: 'refugios',
-    latitude: 6.2000,
-    longitude: -75.5700,
-    participants: 8,
-    date: '2025-09-19',
-    status: 'active',
-    createdBy: 'admin',
-    createdAt: new Date('2025-09-11'),
-    updatedAt: new Date('2025-09-11')
-  },
-  {
-    id: '11',
-    title: 'Casa de Acogida - Manrique',
-    description: 'Casa de acogida para mujeres víctimas de violencia en Manrique. Ofrece refugio seguro, asesoría legal y apoyo psicológico.',
-    category: 'refugios',
-    latitude: 6.2700,
-    longitude: -75.5500,
-    participants: 15,
-    date: '2025-09-18',
-    status: 'active',
-    createdBy: 'admin',
-    createdAt: new Date('2025-09-10'),
-    updatedAt: new Date('2025-09-10')
-  },
-
-  // PROTESTAS
-  {
-    id: '12',
-    title: 'Marcha por la Paz - Medellín',
-    description: 'Manifestación pacífica por la construcción de paz en Medellín. Reclama mayor inversión social y oportunidades para los jóvenes.',
-    category: 'protestas',
-    latitude: 6.2500,
-    longitude: -75.5800,
-    participants: 150,
-    date: '2025-09-28',
-    status: 'upcoming',
-    createdBy: 'admin',
-    createdAt: new Date('2025-09-09'),
-    updatedAt: new Date('2025-09-09')
-  },
-  {
-    id: '13',
-    title: 'Movilización por el Medio Ambiente',
-    description: 'Protesta pacífica exigiendo políticas ambientales más estrictas y protección de los cerros tutelares de Medellín.',
-    category: 'protestas',
-    latitude: 6.2200,
-    longitude: -75.6000,
-    participants: 75,
-    date: '2025-09-29',
-    status: 'upcoming',
-    createdBy: 'admin',
-    createdAt: new Date('2025-09-08'),
-    updatedAt: new Date('2025-09-08')
-  },
-  {
-    id: '14',
-    title: 'Manifestación por la Educación Pública',
-    description: 'Protesta estudiantil exigiendo mejoras en la educación pública y mayor presupuesto para las universidades estatales.',
-    category: 'protestas',
-    latitude: 6.2600,
-    longitude: -75.5700,
-    participants: 200,
-    date: '2025-09-25',
-    status: 'upcoming',
-    createdBy: 'admin',
-    createdAt: new Date('2025-09-07'),
-    updatedAt: new Date('2025-09-07')
-  }
-]
+// Dejamos el arreglo mock vacío. La fuente será Firestore via contexto
+const mockActivities: Activity[] = []
 
 const categoryConfig = {
   eventos: {
@@ -246,31 +44,24 @@ const categoryConfig = {
 }
 
 export function RecentActivities() {
-  const [activities, setActivities] = useState<Activity[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+  const { activities, isLoading, loadActivities } = useActivitiesContext()
+  const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null)
 
-  useEffect(() => {
-    const loadActivities = async () => {
-      setIsLoading(true)
-      try {
-        // Usar datos de ejemplo
-        setActivities(mockActivities)
-        console.log("Actividades recientes cargadas:", mockActivities.length)
-      } catch (error) {
-        console.error("Error al cargar actividades:", error)
-        setActivities([])
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    loadActivities()
-  }, [])
+  // No necesitamos cargar aquí, el contexto ya lo hace automáticamente
 
   // Obtener las 6 actividades más recientes
   const recentActivities = activities
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     .slice(0, 6)
+
+  const formatTime = (time: string) => {
+    if (!time) return ""
+    const [hours, minutes] = time.split(':')
+    const hour = parseInt(hours)
+    const ampm = hour >= 12 ? 'PM' : 'AM'
+    const displayHour = hour % 12 || 12
+    return `${displayHour}:${minutes} ${ampm}`
+  }
 
   if (isLoading) {
     return (
@@ -349,6 +140,7 @@ export function RecentActivities() {
                   variant="outline" 
                   size="sm" 
                   className="w-full text-xs"
+                  onClick={() => setSelectedActivity(activity)}
                 >
                   Ver Detalles
                 </Button>
@@ -363,6 +155,120 @@ export function RecentActivities() {
           Ver Todas las Actividades
         </Button>
       </div>
+
+      {/* Dialog de detalles */}
+      {selectedActivity && (
+        <Dialog open={!!selectedActivity} onOpenChange={() => setSelectedActivity(null)}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <div className="flex items-center gap-3 mb-2">
+                {(() => {
+                  const config = categoryConfig[selectedActivity.category]
+                  const Icon = config.icon
+                  return (
+                    <div className={`w-10 h-10 rounded-full ${config.bgColor} flex items-center justify-center`}>
+                      <Icon className={`h-5 w-5 ${config.textColor}`} />
+                    </div>
+                  )
+                })()}
+                <DialogTitle className="text-2xl">{selectedActivity.title}</DialogTitle>
+              </div>
+              <div className="flex items-center gap-2">
+                {(() => {
+                  const config = categoryConfig[selectedActivity.category]
+                  return (
+                    <Badge 
+                      variant="outline" 
+                      className={`text-xs ${config.textColor} border-current`}
+                    >
+                      {config.label}
+                    </Badge>
+                  )
+                })()}
+                <Badge 
+                  variant={selectedActivity.status === 'active' ? 'default' : 'secondary'}
+                  className="text-xs"
+                >
+                  {selectedActivity.status === 'active' ? 'Activo' : 
+                   selectedActivity.status === 'upcoming' ? 'Próximo' : 'Completado'}
+                </Badge>
+              </div>
+            </DialogHeader>
+            
+            <div className="space-y-6 pt-4">
+              <div>
+                <h4 className="font-semibold mb-2 text-foreground">Descripción</h4>
+                <p className="text-muted-foreground leading-relaxed">
+                  {selectedActivity.description}
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 text-sm">
+                    <MapPin className="h-4 w-4 text-muted-foreground" />
+                    <div>
+                      <span className="font-semibold text-foreground">Ubicación:</span>
+                      <p className="text-muted-foreground">{selectedActivity.location || 'Medellín'}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <Calendar className="h-4 w-4 text-muted-foreground" />
+                    <div>
+                      <span className="font-semibold text-foreground">Fecha:</span>
+                      <p className="text-muted-foreground">
+                        {new Date(selectedActivity.date).toLocaleDateString('es-CO', {
+                          weekday: 'long',
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric'
+                        })}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <Clock className="h-4 w-4 text-muted-foreground" />
+                    <div>
+                      <span className="font-semibold text-foreground">Hora:</span>
+                      <p className="text-muted-foreground">
+                        {formatTime(selectedActivity.time)}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 text-sm">
+                    <Users className="h-4 w-4 text-muted-foreground" />
+                    <div>
+                      <span className="font-semibold text-foreground">Participantes:</span>
+                      <p className="text-muted-foreground">
+                        {selectedActivity.participants} / {selectedActivity.capacity}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <Target className="h-4 w-4 text-muted-foreground" />
+                    <div>
+                      <span className="font-semibold text-foreground">Objetivo:</span>
+                      <p className="text-muted-foreground">{selectedActivity.fundraisingGoal}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-2 pt-4 border-t">
+                <Button variant="default" className="flex-1">
+                  Participar
+                </Button>
+                <Button variant="outline" className="flex-1">
+                  Compartir
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   )
 }

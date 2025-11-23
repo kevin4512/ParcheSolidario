@@ -6,15 +6,19 @@
 
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { ServiceCategories } from "@/components/panel-components/service-categories"
 import { ProfileVerification } from "@/components/profile-verification"
 import { HeatmapView } from "@/components/heatmap-view"
 import { AddActivityForm } from "@/components/add-activity-form"
+import { EventPublications } from "@/components/event-publications"
 import { RecentActivities } from "@/components/recent-activities"
+import { CategoryActivities } from "@/components/category-activities"
+import { ActivitiesProvider } from "@/contexts/ActivitiesContext"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { logout } from "@/modules/domain/auth/firebaseAuth"
+import { toast } from "sonner"
 
 
 // Definición del tipo User para recibir el usuario real por props
@@ -31,6 +35,10 @@ interface SessionPanelProps {
   export function SessionPanel({ user, onLogout }: SessionPanelProps) {
     // Estado para controlar la sección activa del panel
     const [activeSection, setActiveSection] = useState<string>("home");
+    // Estado para controlar la categoría seleccionada
+    const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+    // Estado para controlar si ya se mostró la alerta de scroll
+    const [hasShownScrollAlert, setHasShownScrollAlert] = useState(false);
 
     // Función para manejar el logout
     const handleLogout = async () => {
@@ -41,6 +49,63 @@ interface SessionPanelProps {
         console.error("Error al cerrar sesión:", error);
       }
     };
+
+    // Resetear el estado de la alerta cuando se vuelve a la página principal
+    useEffect(() => {
+      if (activeSection === "home") {
+        // Resetear cuando vuelve a home para que pueda ver la alerta de nuevo si hace scroll
+        // Solo si no está en la parte superior de la página
+        if (window.scrollY <= 200) {
+          setHasShownScrollAlert(false);
+        }
+      }
+    }, [activeSection]);
+
+    // Efecto para detectar scroll y mostrar alerta
+    useEffect(() => {
+      // Solo mostrar la alerta en la página principal (home)
+      if (activeSection !== "home") {
+        return;
+      }
+
+      const handleScroll = () => {
+        // Detectar cuando el usuario hace scroll más de 200px
+        const scrollY = window.scrollY || window.pageYOffset;
+        
+        if (scrollY > 200 && !hasShownScrollAlert) {
+          setHasShownScrollAlert(true);
+          toast("🎯 ¡Crea tu Evento!", {
+            description: "Recuerda que puedes agregar un evento en la sección de Crear Evento en el menú de navegación",
+            duration: 10000,
+            className: "!min-w-[400px] !text-lg !p-6 !shadow-2xl !border-2 !bg-primary !text-primary-foreground !border-primary",
+            style: {
+              fontSize: '16px',
+              fontWeight: '600',
+              backgroundColor: 'var(--primary)',
+              color: 'var(--primary-foreground)',
+              borderColor: 'var(--primary)',
+            },
+            action: {
+              label: "Ir a Crear Evento",
+              onClick: () => setActiveSection("map")
+            },
+            cancel: {
+              label: "Cerrar",
+              onClick: () => {}
+            },
+            dismissible: true
+          });
+        }
+      };
+
+      // Agregar el listener de scroll
+      window.addEventListener("scroll", handleScroll, { passive: true });
+
+      // Limpiar el listener cuando el componente se desmonte o cambie la sección
+      return () => {
+        window.removeEventListener("scroll", handleScroll);
+      };
+    }, [activeSection, hasShownScrollAlert]);
     if (!user) {
       return (
         <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -57,9 +122,9 @@ interface SessionPanelProps {
       );
     }
 
-  const firstName = user?.displayName?.split(/\s+/)?.filter(Boolean)?.[0] || user?.email?.split('@')?.[0] || 'Usuario';
 
-  return (
+    return (
+      <ActivitiesProvider>
       <div className="w-full min-h-screen bg-background flex flex-col items-center justify-center">
   <header className="bg-primary text-primary-foreground shadow-lg w-full">
           <div className="w-full max-w-7xl mx-auto px-2 sm:px-4 py-4 flex flex-col md:flex-row items-center justify-between gap-4">
@@ -83,6 +148,16 @@ interface SessionPanelProps {
                     Inicio
                   </button>
                   <button
+                    onClick={() => setActiveSection("about")}
+                    className={`px-3 py-2 rounded-md transition-colors ${
+                      activeSection === "about"
+                        ? "bg-white text-primary font-medium"
+                        : "text-primary-foreground hover:bg-white/10"
+                    }`}
+                  >
+                    Nosotros
+                  </button>
+                  <button
                     onClick={() => setActiveSection("services")}
                     className={`px-3 py-2 rounded-md transition-colors ${
                       activeSection === "services"
@@ -93,35 +168,25 @@ interface SessionPanelProps {
                     Servicios
                   </button>
                   <button
-                    onClick={() => setActiveSection("about")}
+                    onClick={() => setActiveSection("map")}
                     className={`px-3 py-2 rounded-md transition-colors ${
-                      activeSection === "about"
+                      activeSection === "map"
                         ? "bg-white text-primary font-medium"
                         : "text-primary-foreground hover:bg-white/10"
                     }`}
                   >
-                    Nosotros
+                    Crear Evento
                   </button>
-                   <button
-                     onClick={() => setActiveSection("profile")}
-                     className={`px-3 py-2 rounded-md transition-colors ${
-                       activeSection === "profile"
-                         ? "bg-white text-primary font-medium"
-                         : "text-primary-foreground hover:bg-white/10"
-                     }`}
-                   >
-                     Mi Perfil
-                   </button>
-                   <button
-                     onClick={() => setActiveSection("map")}
-                     className={`px-3 py-2 rounded-md transition-colors ${
-                       activeSection === "map"
-                         ? "bg-white text-primary font-medium"
-                         : "text-primary-foreground hover:bg-white/10"
-                     }`}
-                   >
-                     Mapa
-                   </button>
+                  <button
+                    onClick={() => setActiveSection("profile")}
+                    className={`px-3 py-2 rounded-md transition-colors ${
+                      activeSection === "profile"
+                        ? "bg-white text-primary font-medium"
+                        : "text-primary-foreground hover:bg-white/10"
+                    }`}
+                  >
+                    Mi Perfil
+                  </button>
                 </nav>
               </div>
               <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
@@ -221,7 +286,13 @@ interface SessionPanelProps {
                      Elige el área donde quieres hacer la diferencia y únete a proyectos que transforman vidas.
                    </p>
                  </div>
-                 <ServiceCategories expanded />
+                 <ServiceCategories 
+                   expanded 
+                   onCategoryClick={(categoryId) => {
+                     setSelectedCategory(categoryId)
+                     setActiveSection("services")
+                   }}
+                 />
                </section>
 
                {/* Actividades Recientes */}
@@ -233,49 +304,97 @@ interface SessionPanelProps {
 
           {activeSection === "services" && (
             <div>
-              <div className="text-center mb-12">
-                <h1 className="text-4xl font-bold text-foreground mb-4">Todos los Servicios</h1>
-                <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                  Explora todas las oportunidades de servicio comunitario disponibles en tu área.
-                </p>
-              </div>
-              <ServiceCategories expanded />
+              {selectedCategory ? (
+                <CategoryActivities 
+                  categoryId={selectedCategory}
+                  onBack={() => setSelectedCategory(null)}
+                />
+              ) : (
+                <>
+                  <div className="text-center mb-12">
+                    <h1 className="text-4xl font-bold text-foreground mb-4">Todos los Servicios</h1>
+                    <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                      Explora todas las oportunidades de servicio comunitario disponibles en tu área.
+                    </p>
+                  </div>
+                  <ServiceCategories 
+                    expanded 
+                    onCategoryClick={(categoryId) => setSelectedCategory(categoryId)}
+                  />
+                </>
+              )}
             </div>
           )}
 
           {activeSection === "about" && (
             <div className="max-w-4xl mx-auto">
               <div className="text-center mb-12">
-                <h1 className="text-4xl font-bold text-foreground mb-4">Sobre Nosotros</h1>
-                <p className="text-lg text-muted-foreground">
-                  Conoce más sobre nuestra organización y cómo estamos transformando comunidades.
+                <h1 className="text-4xl font-bold text-foreground mb-4">Parche Solidario</h1>
+                <p className="text-lg text-muted-foreground font-semibold">
+                Conoce más sobre nuestra organización y cómo estamos transformando comunidades.
                 </p>
               </div>
-              <div className="prose prose-lg mx-auto">
-                <Card className="p-8">
-                  <h2 className="text-2xl font-semibold mb-4 text-foreground">Nuestra Historia</h2>
-                  <p className="text-muted-foreground mb-6 leading-relaxed">
-                    Fundada en 2025, nuestra plataforma nació de la necesidad de crear puentes entre ciudadanos
-                    comprometidos y las oportunidades de servicio en sus comunidades. Creemos que cada persona tiene el
-                    poder de generar cambios positivos cuando se le brindan las herramientas y oportunidades adecuadas.
-                  </p>
-                  <h3 className="text-xl font-semibold mb-3 text-foreground">Nuestros Valores</h3>
-                  <ul className="space-y-2 text-muted-foreground">
-                    <li>
-                      • <strong>Transparencia:</strong> Operamos con total claridad en todos nuestros procesos
-                    </li>
-                    <li>
-                      • <strong>Inclusión:</strong> Creamos espacios donde todos pueden participar y contribuir
-                    </li>
-                    <li>
-                      • <strong>Impacto:</strong> Nos enfocamos en generar cambios medibles y duraderos
-                    </li>
-                    <li>
-                      • <strong>Colaboración:</strong> Fomentamos el trabajo conjunto entre todos los actores
-                    </li>
-                  </ul>
-                </Card>
-              </div>
+              
+              <Card className="p-8 md:p-12 border-2">
+                <div className="space-y-10">
+                  {/* Quiénes Somos */}
+                  <section>
+                    <h2 className="text-2xl font-bold mb-6 text-foreground">Quiénes Somos</h2>
+                    <div className="space-y-4 text-muted-foreground leading-relaxed">
+                      <p>
+                        En Parche Solidario creemos en la fuerza de las pequeñas acciones y en el poder de una ciudad que se cuida entre todos. Por eso creamos una aplicación web que reúne, en un solo lugar, las causas sociales que necesitan apoyo en Medellín: eventos, refugios, colectas, protestas y muchas otras iniciativas que buscan transformar realidades.
+                      </p>
+                      <p>
+                        Queremos que ayudar sea más fácil. Con nuestro mapa de calor, filtros por tipo de causa y perfiles verificados, cada persona puede encontrar dónde aportar, a quién apoyar y cómo unirse a quienes ya están haciendo la diferencia, porque cuando una historia se difunde, crece la esperanza.
+                      </p>
+                      <p>
+                        Somos un proyecto sin fines comerciales, impulsado por la convicción de que la solidaridad se multiplica cuando la tecnología se usa para conectar corazones. En Parche Solidario, trabajamos para que cada gesto cuente y para que Medellín siga siendo una ciudad que late al ritmo de su gente.
+                      </p>
+                    </div>
+                  </section>
+
+                  {/* Nuestra Historia */}
+                  <section>
+                    <h2 className="text-2xl font-bold mb-6 text-foreground">Nuestra Historia</h2>
+                    <p className="text-muted-foreground leading-relaxed">
+                      Fundada en 2025, nuestra plataforma nació de la necesidad de crear puentes entre ciudadanos
+                      comprometidos y las oportunidades de servicio en sus comunidades. Creemos que cada persona tiene el
+                      poder de generar cambios positivos cuando se le brindan las herramientas y oportunidades adecuadas.
+                    </p>
+                  </section>
+
+                  {/* Nuestros Valores */}
+                  <section>
+                    <h2 className="text-2xl font-bold mb-6 text-foreground">Nuestros Valores</h2>
+                    <ul className="space-y-3 text-muted-foreground">
+                      <li className="flex items-start gap-3">
+                        <span className="text-primary font-bold text-xl">•</span>
+                        <div>
+                          <strong className="text-foreground">Transparencia:</strong> Operamos con total claridad en todos nuestros procesos
+                        </div>
+                      </li>
+                      <li className="flex items-start gap-3">
+                        <span className="text-primary font-bold text-xl">•</span>
+                        <div>
+                          <strong className="text-foreground">Inclusión:</strong> Creamos espacios donde todos pueden participar y contribuir
+                        </div>
+                      </li>
+                      <li className="flex items-start gap-3">
+                        <span className="text-primary font-bold text-xl">•</span>
+                        <div>
+                          <strong className="text-foreground">Impacto:</strong> Nos enfocamos en generar cambios medibles y duraderos
+                        </div>
+                      </li>
+                      <li className="flex items-start gap-3">
+                        <span className="text-primary font-bold text-xl">•</span>
+                        <div>
+                          <strong className="text-foreground">Colaboración:</strong> Fomentamos el trabajo conjunto entre todos los actores
+                        </div>
+                      </li>
+                    </ul>
+                  </section>
+                </div>
+              </Card>
             </div>
           )}
 
@@ -286,13 +405,16 @@ interface SessionPanelProps {
           )}
 
           {activeSection === "map" && (
-            <div className="w-full space-y-8">
-              <HeatmapView />
-              <AddActivityForm />
-            </div>
+            <ActivitiesProvider>
+              <div className="w-full space-y-8">
+                <AddActivityForm />
+                <EventPublications />
+              </div>
+            </ActivitiesProvider>
           )}
         </main>
       </div>
+      </ActivitiesProvider>
     );
   }
 

@@ -1,4 +1,4 @@
-import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, where, orderBy } from "firebase/firestore";
+import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, where, orderBy, serverTimestamp } from "firebase/firestore";
 import { getFirestore } from "firebase/firestore";
 import { firebaseApp } from "../../../firebase/clientApp";
 
@@ -12,7 +12,11 @@ export interface Activity {
   latitude: number;
   longitude: number;
   participants: number;
+  capacity: number;
   date: string;
+  time: string;
+  location: string;
+  fundraisingGoal: string;
   status: 'active' | 'completed' | 'upcoming';
   createdBy: string;
   createdAt: Date;
@@ -26,7 +30,11 @@ export interface CreateActivityData {
   latitude: number;
   longitude: number;
   participants: number;
+  capacity: number;
   date: string;
+  time: string;
+  location: string;
+  fundraisingGoal: string;
   status: 'active' | 'completed' | 'upcoming';
   createdBy: string;
 }
@@ -46,19 +54,29 @@ export class ActivitiesService {
       const activities: Activity[] = [];
       querySnapshot.forEach((doc) => {
         const data = doc.data();
-        // Normalizar posibles formatos de ubicación (latitude/longitude directos o GeoPoint en 'location')
-        const normalized: any = {
-          ...data,
-          latitude: data.latitude ?? data.location?.latitude,
-          longitude: data.longitude ?? data.location?.longitude,
+        
+        // Validar y limpiar datos
+        const activity: Activity = {
+          id: doc.id,
+          title: data.title || '',
+          description: data.description || '',
+          category: data.category || 'eventos',
+          latitude: typeof data.latitude === 'number' ? data.latitude : 6.2442, // Default Medellín
+          longitude: typeof data.longitude === 'number' ? data.longitude : -75.5812, // Default Medellín
+          participants: typeof data.participants === 'number' ? data.participants : 0,
+          capacity: typeof data.capacity === 'number' ? data.capacity : 1,
+          date: data.date || '',
+          time: data.time || '',
+          location: data.location || '',
+          fundraisingGoal: data.fundraisingGoal || '',
+          status: data.status || 'upcoming',
+          createdBy: data.createdBy || '',
           createdAt: data.createdAt?.toDate() || new Date(),
           updatedAt: data.updatedAt?.toDate() || new Date(),
-        }
+        };
+        
+        activities.push(activity);
 
-        activities.push({
-          id: doc.id,
-          ...normalized
-        } as Activity);
       });
 
       return activities;
@@ -187,12 +205,24 @@ export class ActivitiesService {
   static async createActivity(activityData: CreateActivityData): Promise<string> {
     try {
       const activitiesRef = collection(db, this.COLLECTION_NAME);
-      const now = new Date();
       
       const docRef = await addDoc(activitiesRef, {
-        ...activityData,
-        createdAt: now,
-        updatedAt: now,
+        // Campos requeridos + defaults defensivos
+        title: activityData.title,
+        description: activityData.description,
+        category: activityData.category,
+        latitude: activityData.latitude,
+        longitude: activityData.longitude,
+        participants: activityData.participants ?? 0,
+        capacity: activityData.capacity ?? 1,
+        date: activityData.date,
+        time: activityData.time,
+        location: activityData.location,
+        fundraisingGoal: activityData.fundraisingGoal,
+        status: activityData.status,
+        createdBy: activityData.createdBy,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
       });
 
       return docRef.id;

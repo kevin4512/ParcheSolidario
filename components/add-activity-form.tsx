@@ -9,22 +9,31 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { MapPin, Plus, Calendar, Users } from "lucide-react"
 import { toast } from "sonner"
-import { useActivities } from "@/src/presentation/hooks/useActivities"
+
+import { ActivitiesService, CreateActivityData, Activity } from "@/modules/infraestructura/firebase/ActivitiesService"
 import { useAuth } from "@/hooks/useAuth"
-import { CreateActivityDto, ActivityCategory, ActivityStatus } from "@/src/application/dto/ActivityDto"
+import { useActivitiesContext } from "@/contexts/ActivitiesContext"
 
 export function AddActivityForm() {
   const { user } = useAuth()
-  const { createActivity, loading } = useActivities()
-  const [formData, setFormData] = useState<CreateActivityDto>({
+  const { addActivity } = useActivitiesContext()
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [formData, setFormData] = useState<CreateActivityData>({
+
     title: "",
     description: "",
     category: "eventos",
     latitude: 6.2442, // Medellín por defecto
     longitude: -75.5812,
     participants: 0,
+    capacity: 0,
     date: "",
-    status: "upcoming"
+    time: "",
+    location: "",
+    fundraisingGoal: "",
+    status: "upcoming",
+    createdBy: user?.uid || ""
+
   })
 
   const handleInputChange = (field: keyof CreateActivityDto, value: string | number) => {
@@ -32,6 +41,20 @@ export function AddActivityForm() {
       ...prev,
       [field]: value
     }))
+  }
+
+  const handleNumberChange = (field: keyof CreateActivityData, value: string) => {
+    const numValue = value === '' ? 0 : parseInt(value, 10)
+    if (!isNaN(numValue)) {
+      handleInputChange(field, numValue)
+    }
+  }
+
+  const handleFloatChange = (field: keyof CreateActivityData, value: string) => {
+    const numValue = value === '' ? 0 : parseFloat(value)
+    if (!isNaN(numValue)) {
+      handleInputChange(field, numValue)
+    }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -42,14 +65,72 @@ export function AddActivityForm() {
       return
     }
 
-    if (!formData.title || !formData.description || !formData.date) {
-      toast.error("Por favor completa todos los campos obligatorios")
+    // Validación de campos obligatorios
+    if (!formData.title.trim()) {
+      toast.error("El nombre del evento es obligatorio")
+      return
+    }
+
+    if (!formData.description.trim()) {
+      toast.error("La descripción es obligatoria")
+      return
+    }
+
+    if (!formData.date) {
+      toast.error("La fecha es obligatoria")
+      return
+    }
+
+    if (!formData.time) {
+      toast.error("La hora es obligatoria")
+      return
+    }
+
+    if (!formData.location.trim()) {
+      toast.error("La ubicación es obligatoria")
+      return
+    }
+
+    if (!formData.capacity || formData.capacity < 1) {
+      toast.error("La capacidad debe ser mayor a 0")
+      return
+    }
+
+    if (!formData.fundraisingGoal.trim()) {
+      toast.error("El objetivo de recaudación es obligatorio")
+      return
+    }
+
+    // Validar que la fecha no sea anterior a hoy
+    const selectedDate = new Date(formData.date)
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    
+    if (selectedDate < today) {
+      toast.error("La fecha del evento no puede ser anterior a hoy")
       return
     }
 
     try {
-      await createActivity(formData, user.uid)
-      toast.success("Actividad creada exitosamente")
+      const activityId = await ActivitiesService.createActivity({
+        ...formData,
+        createdBy: user.uid
+      })
+      
+      // Crear el objeto de actividad completo para agregar al contexto
+      const newActivity: Activity = {
+        id: activityId,
+        ...formData,
+        createdBy: user.uid,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
+      
+      // Agregar la actividad al contexto para actualizar automáticamente las publicaciones
+      addActivity(newActivity)
+      
+      toast.success("Evento publicado exitosamente")
+
       
       // Limpiar formulario
       setFormData({
@@ -59,8 +140,14 @@ export function AddActivityForm() {
         latitude: 6.2442,
         longitude: -75.5812,
         participants: 0,
+        capacity: 0,
         date: "",
-        status: "upcoming"
+        time: "",
+        location: "",
+        fundraisingGoal: "",
+        status: "upcoming",
+        createdBy: user.uid
+
       })
       
     } catch (error) {
@@ -74,10 +161,10 @@ export function AddActivityForm() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Plus className="h-5 w-5" />
-          Agregar Nueva Actividad
+          Crear y Publicar Evento
         </CardTitle>
         <CardDescription>
-          Crea una nueva actividad para que aparezca en el mapa de calor
+          Completa el formulario para crear un evento que será visible para otros usuarios
         </CardDescription>
       </CardHeader>
       
@@ -126,15 +213,37 @@ export function AddActivityForm() {
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="fundraisingGoal">¿Qué desea recaudar? *</Label>
+            <Input
+              id="fundraisingGoal"
+              value={formData.fundraisingGoal}
+              onChange={(e) => handleInputChange('fundraisingGoal', e.target.value)}
+              placeholder="Ej: Fondos para animales sin hogar, $500,000 COP"
+              required
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="location">Ubicación *</Label>
+            <Input
+              id="location"
+              value={formData.location}
+              onChange={(e) => handleInputChange('location', e.target.value)}
+              placeholder="Ej: Parque Central, Medellín"
+              required
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="latitude">Latitud</Label>
               <Input
                 id="latitude"
                 type="number"
                 step="any"
-                value={formData.latitude}
-                onChange={(e) => handleInputChange('latitude', parseFloat(e.target.value))}
+                value={formData.latitude || ''}
+                onChange={(e) => handleFloatChange('latitude', e.target.value)}
                 placeholder="6.2442"
               />
             </div>
@@ -145,21 +254,36 @@ export function AddActivityForm() {
                 id="longitude"
                 type="number"
                 step="any"
-                value={formData.longitude}
-                onChange={(e) => handleInputChange('longitude', parseFloat(e.target.value))}
+                value={formData.longitude || ''}
+                onChange={(e) => handleFloatChange('longitude', e.target.value)}
                 placeholder="-75.5812"
               />
             </div>
+          </div>
 
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="participants">Participantes</Label>
+              <Label htmlFor="participants">Participantes Actuales</Label>
               <Input
                 id="participants"
                 type="number"
                 min="0"
-                value={formData.participants}
-                onChange={(e) => handleInputChange('participants', parseInt(e.target.value))}
+                value={formData.participants || ''}
+                onChange={(e) => handleNumberChange('participants', e.target.value)}
                 placeholder="0"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="capacity">Capacidad Máxima *</Label>
+              <Input
+                id="capacity"
+                type="number"
+                min="1"
+                value={formData.capacity || ''}
+                onChange={(e) => handleNumberChange('capacity', e.target.value)}
+                placeholder="50"
+                required
               />
             </div>
           </div>
@@ -172,26 +296,38 @@ export function AddActivityForm() {
                 type="date"
                 value={formData.date}
                 onChange={(e) => handleInputChange('date', e.target.value)}
+                min={new Date().toISOString().split('T')[0]}
                 required
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="status">Estado</Label>
-              <Select
-                value={formData.status}
-                onValueChange={(value) => handleInputChange('status', value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecciona el estado" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="upcoming">Próximo</SelectItem>
-                  <SelectItem value="active">Activo</SelectItem>
-                  <SelectItem value="completed">Completado</SelectItem>
-                </SelectContent>
-              </Select>
+              <Label htmlFor="time">Hora *</Label>
+              <Input
+                id="time"
+                type="time"
+                value={formData.time}
+                onChange={(e) => handleInputChange('time', e.target.value)}
+                required
+              />
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="status">Estado</Label>
+            <Select
+              value={formData.status}
+              onValueChange={(value) => handleInputChange('status', value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Selecciona el estado" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="upcoming">Próximo</SelectItem>
+                <SelectItem value="active">Activo</SelectItem>
+                <SelectItem value="completed">Completado</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="flex justify-end gap-3">
@@ -205,8 +341,15 @@ export function AddActivityForm() {
                 latitude: 6.2442,
                 longitude: -75.5812,
                 participants: 0,
+                capacity: 0,
                 date: "",
-                status: "upcoming"
+
+                time: "",
+                location: "",
+                fundraisingGoal: "",
+                status: "upcoming",
+                createdBy: user?.uid || ""
+
               })}
             >
               Limpiar
@@ -219,12 +362,12 @@ export function AddActivityForm() {
               {loading ? (
                 <>
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  Creando...
+                  Publicando...
                 </>
               ) : (
                 <>
                   <Plus className="h-4 w-4" />
-                  Crear Actividad
+                  Publicar Evento
                 </>
               )}
             </Button>
